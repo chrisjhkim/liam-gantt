@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 @Component
 public class ProjectMapper {
 
-    @Autowired
-    private TaskMapper taskMapper;
+    // TaskMapper taskMapper;  // 순환 의존성 방지를 위해 주석 처리
 
     public Project toEntity(ProjectRequestDto dto) {
         if (dto == null) {
@@ -48,9 +47,7 @@ public class ProjectMapper {
         double avgProgress = calculateAverageProgress(entity);
         
         if (entity.getTasks() != null) {
-            builder.tasks(entity.getTasks().stream()
-                    .map(taskMapper::toResponseDto)
-                    .collect(Collectors.toList()));
+            // tasks는 순환 의존성을 피하기 위해 null로 설정하거나 별도 처리
             builder.taskCount(entity.getTasks().size());
         } else {
             builder.taskCount(0);

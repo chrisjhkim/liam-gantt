@@ -36,14 +36,7 @@ class TaskMapperTest {
     void setUp() {
         dependencyMapper = mock(TaskDependencyMapper.class);
         taskMapper = new TaskMapper();
-        // TaskDependencyMapper를 주입하기 위해 리플렉션 사용
-        try {
-            java.lang.reflect.Field field = TaskMapper.class.getDeclaredField("dependencyMapper");
-            field.setAccessible(true);
-            field.set(taskMapper, dependencyMapper);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // TaskDependencyMapper는 현재 사용되지 않으므로 주입하지 않음
 
         testProject = Project.builder()
                 .name("테스트 프로젝트")

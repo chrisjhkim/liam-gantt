@@ -5,8 +5,9 @@ import com.liam.gantt.dto.response.TaskResponseDto;
 import com.liam.gantt.entity.Project;
 import com.liam.gantt.entity.Task;
 import com.liam.gantt.entity.enums.TaskStatus;
-import com.liam.gantt.exception.InvalidRequestException;
-import com.liam.gantt.exception.ResourceNotFoundException;
+import com.liam.gantt.exception.TaskNotFoundException;
+import com.liam.gantt.exception.ProjectNotFoundException;
+import com.liam.gantt.mapper.TaskMapper;
 import com.liam.gantt.repository.ProjectRepository;
 import com.liam.gantt.repository.TaskDependencyRepository;
 import com.liam.gantt.repository.TaskRepository;
@@ -36,6 +37,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final TaskDependencyRepository dependencyRepository;
+    private final TaskMapper taskMapper;
     
     @Override
     @Transactional
@@ -44,52 +46,44 @@ public class TaskServiceImpl implements TaskService {
         
         // 프로젝트 존재 확인
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", projectId));
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + projectId));
         
         // 날짜 유효성 검증
         if (!requestDto.isValidDateRange()) {
-            throw new InvalidRequestException("종료일은 시작일보다 같거나 늦어야 합니다");
+            throw new IllegalArgumentException("종료일은 시작일보다 같거나 늦어야 합니다");
         }
         
         // 상위 태스크 확인 (있는 경우)
         Task parentTask = null;
         if (requestDto.getParentTaskId() != null) {
             parentTask = taskRepository.findById(requestDto.getParentTaskId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Parent Task", "id", requestDto.getParentTaskId()));
+                    .orElseThrow(() -> new TaskNotFoundException("상위 태스크를 찾을 수 없습니다: " + requestDto.getParentTaskId()));
             
             // 상위 태스크가 같은 프로젝트 소속인지 확인
             if (!parentTask.getProject().getId().equals(projectId)) {
-                throw new InvalidRequestException("상위 태스크는 같은 프로젝트에 속해야 합니다");
+                throw new IllegalArgumentException("상위 태스크는 같은 프로젝트에 속해야 합니다");
             }
         }
         
-        // 엔티티 생성
-        Task task = Task.builder()
-                .project(project)
-                .parentTask(parentTask)
-                .name(requestDto.getName())
-                .description(requestDto.getDescription())
-                .startDate(requestDto.getStartDate())
-                .endDate(requestDto.getEndDate())
-                .duration(requestDto.getDuration() != null ? requestDto.getDuration() : requestDto.calculateDuration())
-                .progress(requestDto.getProgress())
-                .status(TaskStatus.NOT_STARTED)
-                .build();
+        // 엔티티 생성 (매퍼 사용)
+        Task task = taskMapper.toEntity(requestDto);
+        task.setProject(project);
+        task.setParentTask(parentTask);
         
         Task savedTask = taskRepository.save(task);
         log.info("태스크 생성 완료: id={}, name={}", savedTask.getId(), savedTask.getName());
         
-        return convertToDto(savedTask);
+        return taskMapper.toResponseDto(savedTask);
     }
     
     @Override
     public TaskResponseDto findById(Long id) {
         log.debug("태스크 조회: id={}", id);
         
-        Task task = taskRepository.findByIdWithDependencies(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
-        return convertToDtoWithDependencies(task);
+        return taskMapper.toResponseDto(task);
     }
     
     @Override
@@ -98,7 +92,7 @@ public class TaskServiceImpl implements TaskService {
         
         List<Task> tasks = taskRepository.findByProjectId(projectId);
         return tasks.stream()
-                .map(this::convertToDto)
+                .map(taskMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -107,7 +101,7 @@ public class TaskServiceImpl implements TaskService {
         log.debug("프로젝트의 태스크 페이징 조회: projectId={}", projectId);
         
         Page<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
-        return tasks.map(this::convertToDto);
+        return tasks.map(taskMapper::toResponseDto);
     }
     
     @Override
@@ -116,28 +110,20 @@ public class TaskServiceImpl implements TaskService {
         log.info("태스크 수정: id={}", id);
         
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
         // 날짜 유효성 검증
         if (!requestDto.isValidDateRange()) {
-            throw new InvalidRequestException("종료일은 시작일보다 같거나 늦어야 합니다");
+            throw new IllegalArgumentException("종료일은 시작일보다 같거나 늦어야 합니다");
         }
         
-        // 엔티티 업데이트
-        task.setName(requestDto.getName());
-        task.setDescription(requestDto.getDescription());
-        task.setStartDate(requestDto.getStartDate());
-        task.setEndDate(requestDto.getEndDate());
-        task.setDuration(requestDto.getDuration() != null ? requestDto.getDuration() : requestDto.calculateDuration());
-        task.setProgress(requestDto.getProgress());
-        
-        // 진행률에 따른 상태 자동 업데이트
-        updateTaskStatusByProgress(task);
+        // 엔티티 업데이트 (매퍼 사용)
+        taskMapper.updateEntity(task, requestDto);
         
         Task updatedTask = taskRepository.save(task);
         log.info("태스크 수정 완료: id={}", id);
         
-        return convertToDto(updatedTask);
+        return taskMapper.toResponseDto(updatedTask);
     }
     
     @Override
@@ -146,11 +132,11 @@ public class TaskServiceImpl implements TaskService {
         log.info("태스크 삭제: id={}", id);
         
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
         // 하위 태스크가 있는 경우 삭제 불가
         if (!task.getSubTasks().isEmpty()) {
-            throw new InvalidRequestException("하위 태스크가 있는 태스크는 삭제할 수 없습니다");
+            throw new IllegalArgumentException("하위 태스크가 있는 태스크는 삭제할 수 없습니다");
         }
         
         // 의존성 제거
@@ -166,11 +152,11 @@ public class TaskServiceImpl implements TaskService {
         log.info("태스크 진행률 업데이트: id={}, progress={}%", id, progress);
         
         if (progress.compareTo(BigDecimal.ZERO) < 0 || progress.compareTo(BigDecimal.valueOf(100)) > 0) {
-            throw new InvalidRequestException("진행률은 0-100 사이여야 합니다");
+            throw new IllegalArgumentException("진행률은 0-100 사이여야 합니다");
         }
         
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
         task.setProgress(progress);
         updateTaskStatusByProgress(task);
@@ -178,7 +164,7 @@ public class TaskServiceImpl implements TaskService {
         Task updatedTask = taskRepository.save(task);
         log.info("태스크 진행률 업데이트 완료: id={}, progress={}%", id, progress);
         
-        return convertToDto(updatedTask);
+        return taskMapper.toResponseDto(updatedTask);
     }
     
     @Override
@@ -187,7 +173,7 @@ public class TaskServiceImpl implements TaskService {
         log.info("태스크 상태 변경: id={}, status={}", id, status);
         
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
         task.setStatus(status);
         
@@ -201,7 +187,7 @@ public class TaskServiceImpl implements TaskService {
         Task updatedTask = taskRepository.save(task);
         log.info("태스크 상태 변경 완료: id={}, status={}", id, status);
         
-        return convertToDto(updatedTask);
+        return taskMapper.toResponseDto(updatedTask);
     }
     
     @Override
@@ -210,7 +196,7 @@ public class TaskServiceImpl implements TaskService {
         log.info("하위 태스크 추가: parentTaskId={}", parentTaskId);
         
         Task parentTask = taskRepository.findById(parentTaskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Parent Task", "id", parentTaskId));
+                .orElseThrow(() -> new TaskNotFoundException("상위 태스크를 찾을 수 없습니다: " + parentTaskId));
         
         requestDto.setParentTaskId(parentTaskId);
         return create(parentTask.getProject().getId(), requestDto);
@@ -238,7 +224,7 @@ public class TaskServiceImpl implements TaskService {
         
         List<Task> tasks = taskRepository.findOverdueTasks(projectId, LocalDate.now());
         return tasks.stream()
-                .map(this::convertToDto)
+                .map(taskMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -248,7 +234,7 @@ public class TaskServiceImpl implements TaskService {
         log.info("태스크 이동: id={}, dayOffset={}", id, dayOffset);
         
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
         LocalDate newStartDate = task.getStartDate().plusDays(dayOffset);
         LocalDate newEndDate = task.getEndDate().plusDays(dayOffset);
@@ -259,7 +245,7 @@ public class TaskServiceImpl implements TaskService {
         Task updatedTask = taskRepository.save(task);
         log.info("태스크 이동 완료: id={}, 새 기간={} ~ {}", id, newStartDate, newEndDate);
         
-        return convertToDto(updatedTask);
+        return taskMapper.toResponseDto(updatedTask);
     }
     
     /**
@@ -270,7 +256,7 @@ public class TaskServiceImpl implements TaskService {
         log.debug("의존성 포함 태스크 조회: id={}", id);
         
         Task task = taskRepository.findByIdWithDependencies(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
+                .orElseThrow(() -> new TaskNotFoundException("태스크를 찾을 수 없습니다: " + id));
         
         return convertToDtoWithDependencies(task);
     }
@@ -297,7 +283,7 @@ public class TaskServiceImpl implements TaskService {
         List<TaskResponseDto> result = new ArrayList<>();
         
         for (Task rootTask : rootTasks) {
-            TaskResponseDto dto = convertToDto(rootTask);
+            TaskResponseDto dto = taskMapper.toResponseDto(rootTask);
             dto.setLevel(0);
             dto.setSubTasks(buildSubTaskHierarchy(rootTask.getSubTasks(), 1));
             result.add(dto);
@@ -313,7 +299,7 @@ public class TaskServiceImpl implements TaskService {
         List<TaskResponseDto> result = new ArrayList<>();
         
         for (Task subTask : subTasks) {
-            TaskResponseDto dto = convertToDto(subTask);
+            TaskResponseDto dto = taskMapper.toResponseDto(subTask);
             dto.setLevel(level);
             dto.setSubTasks(buildSubTaskHierarchy(subTask.getSubTasks(), level + 1));
             result.add(dto);
@@ -359,7 +345,7 @@ public class TaskServiceImpl implements TaskService {
         return tasks.stream()
                 .filter(task -> name == null || task.getName().toLowerCase().contains(name.toLowerCase()))
                 .filter(task -> status == null || task.getStatus().name().equals(status))
-                .map(this::convertToDto)
+                .map(taskMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -369,7 +355,7 @@ public class TaskServiceImpl implements TaskService {
         
         List<Task> tasks = taskRepository.findByProjectIdAndStatus(projectId, status);
         return tasks.stream()
-                .map(this::convertToDto)
+                .map(taskMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -379,12 +365,12 @@ public class TaskServiceImpl implements TaskService {
         
         List<Task> tasks = taskRepository.findByProjectIdAndNameContainingIgnoreCase(projectId, keyword);
         return tasks.stream()
-                .map(this::convertToDto)
+                .map(taskMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
 
     private TaskResponseDto convertToDtoWithDependencies(Task task) {
-        TaskResponseDto dto = convertToDto(task);
+        TaskResponseDto dto = taskMapper.toResponseDto(task);
         
         // 의존성 정보는 별도 서비스에서 처리
         // GanttService에서 관리

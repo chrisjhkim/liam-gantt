@@ -4,9 +4,10 @@ import com.liam.gantt.dto.request.ProjectRequestDto;
 import com.liam.gantt.dto.response.ProjectResponseDto;
 import com.liam.gantt.entity.Project;
 import com.liam.gantt.entity.enums.ProjectStatus;
-import com.liam.gantt.exception.DuplicateResourceException;
-import com.liam.gantt.exception.InvalidRequestException;
-import com.liam.gantt.exception.ResourceNotFoundException;
+import com.liam.gantt.exception.DuplicateProjectNameException;
+import com.liam.gantt.exception.InvalidProjectDateException;
+import com.liam.gantt.exception.ProjectNotFoundException;
+import com.liam.gantt.mapper.ProjectMapper;
 import com.liam.gantt.repository.ProjectRepository;
 import com.liam.gantt.repository.TaskRepository;
 import com.liam.gantt.service.ProjectService;
@@ -32,6 +33,7 @@ public class ProjectServiceImpl implements ProjectService {
     
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
+    private final ProjectMapper projectMapper;
     
     @Override
     @Transactional
@@ -40,37 +42,31 @@ public class ProjectServiceImpl implements ProjectService {
         
         // 중복 체크
         if (projectRepository.existsByName(requestDto.getName())) {
-            throw new DuplicateResourceException("Project", "name", requestDto.getName());
+            throw new DuplicateProjectNameException("이미 존재하는 프로젝트명입니다: " + requestDto.getName());
         }
         
         // 날짜 유효성 검증
         if (!requestDto.isValidDateRange()) {
-            throw new InvalidRequestException("종료일은 시작일보다 같거나 늦어야 합니다");
+            throw new InvalidProjectDateException("종료일은 시작일보다 같거나 늦어야 합니다");
         }
         
         // 엔티티 생성
-        Project project = Project.builder()
-                .name(requestDto.getName())
-                .description(requestDto.getDescription())
-                .startDate(requestDto.getStartDate())
-                .endDate(requestDto.getEndDate())
-                .status(ProjectStatus.PLANNING)
-                .build();
+        Project project = projectMapper.toEntity(requestDto);
         
         Project savedProject = projectRepository.save(project);
         log.info("프로젝트 생성 완료: id={}, name={}", savedProject.getId(), savedProject.getName());
         
-        return convertToDto(savedProject);
+        return projectMapper.toResponseDto(savedProject);
     }
     
     @Override
     public ProjectResponseDto findById(Long id) {
         log.debug("프로젝트 조회: id={}", id);
         
-        Project project = projectRepository.findByIdWithTasks(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + id));
         
-        return convertToDto(project);
+        return projectMapper.toResponseDto(project);
     }
     
     @Override
@@ -78,7 +74,7 @@ public class ProjectServiceImpl implements ProjectService {
         log.debug("모든 프로젝트 페이징 조회");
         
         Page<Project> projects = projectRepository.findAll(pageable);
-        return projects.map(this::convertToDto);
+        return projects.map(projectMapper::toResponseDto);
     }
     
     @Override
@@ -87,29 +83,25 @@ public class ProjectServiceImpl implements ProjectService {
         log.info("프로젝트 수정: id={}", id);
         
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + id));
         
         // 프로젝트명 중복 체크 (자기 자신 제외)
-        if (!project.getName().equals(requestDto.getName()) && 
-            projectRepository.existsByName(requestDto.getName())) {
-            throw new DuplicateResourceException("Project", "name", requestDto.getName());
+        if (projectRepository.existsByNameAndIdNot(requestDto.getName(), id)) {
+            throw new DuplicateProjectNameException("이미 존재하는 프로젝트명입니다: " + requestDto.getName());
         }
         
         // 날짜 유효성 검증
         if (!requestDto.isValidDateRange()) {
-            throw new InvalidRequestException("종료일은 시작일보다 같거나 늦어야 합니다");
+            throw new InvalidProjectDateException("종료일은 시작일보다 같거나 늦어야 합니다");
         }
         
-        // 엔티티 업데이트
-        project.setName(requestDto.getName());
-        project.setDescription(requestDto.getDescription());
-        project.setStartDate(requestDto.getStartDate());
-        project.setEndDate(requestDto.getEndDate());
+        // 엔티티 업데이트 (매퍼 사용)
+        projectMapper.updateEntity(project, requestDto);
         
         Project updatedProject = projectRepository.save(project);
         log.info("프로젝트 수정 완료: id={}", id);
         
-        return convertToDto(updatedProject);
+        return projectMapper.toResponseDto(updatedProject);
     }
     
     @Override
@@ -118,7 +110,7 @@ public class ProjectServiceImpl implements ProjectService {
         log.info("프로젝트 삭제: id={}", id);
         
         if (!projectRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Project", "id", id);
+            throw new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + id);
         }
         
         projectRepository.deleteById(id);
@@ -131,7 +123,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<Project> projects = projectRepository.findAll();
         return projects.stream()
-                .map(this::convertToDto)
+                .map(projectMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -140,8 +132,8 @@ public class ProjectServiceImpl implements ProjectService {
         log.debug("태스크 포함 프로젝트 조회: id={}", id);
 
         Project project = projectRepository.findByIdWithTasks(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
-        return convertToDto(project);
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + id));
+        return projectMapper.toResponseDto(project);
     }
 
     @Override
@@ -150,7 +142,7 @@ public class ProjectServiceImpl implements ProjectService {
         
         List<Project> projects = projectRepository.findByNameContainingIgnoreCase(keyword);
         return projects.stream()
-                .map(this::convertToDto)
+                .map(projectMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -160,7 +152,7 @@ public class ProjectServiceImpl implements ProjectService {
         
         List<Project> projects = projectRepository.findByStatus(status);
         return projects.stream()
-                .map(this::convertToDto)
+                .map(projectMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -168,11 +160,26 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectResponseDto> search(String name, String status) {
         log.debug("프로젝트 검색: name={}, status={}", name, status);
 
-        List<Project> projects = projectRepository.findAll();
+        List<Project> projects;
+        
+        if (name != null && status != null) {
+            // 이름과 상태 모두로 검색
+            ProjectStatus projectStatus = ProjectStatus.valueOf(status);
+            projects = projectRepository.findByNameContainingIgnoreCaseAndStatus(name, projectStatus);
+        } else if (name != null) {
+            // 이름만으로 검색
+            projects = projectRepository.findByNameContainingIgnoreCase(name);
+        } else if (status != null) {
+            // 상태만으로 검색
+            ProjectStatus projectStatus = ProjectStatus.valueOf(status);
+            projects = projectRepository.findByStatus(projectStatus);
+        } else {
+            // 모든 프로젝트 조회
+            projects = projectRepository.findAll();
+        }
+        
         return projects.stream()
-                .filter(p -> name == null || p.getName().toLowerCase().contains(name.toLowerCase()))
-                .filter(p -> status == null || p.getStatus().name().equals(status))
-                .map(this::convertToDto)
+                .map(projectMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -181,7 +188,7 @@ public class ProjectServiceImpl implements ProjectService {
         log.debug("페이징된 프로젝트 검색: name={}, status={}", name, status);
 
         Page<Project> projects = projectRepository.findAll(pageable);
-        return projects.map(this::convertToDto);
+        return projects.map(projectMapper::toResponseDto);
     }
 
     @Override
@@ -205,7 +212,7 @@ public class ProjectServiceImpl implements ProjectService {
         
         List<Project> projects = projectRepository.findOverdueProjects(LocalDate.now());
         return projects.stream()
-                .map(this::convertToDto)
+                .map(projectMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -215,13 +222,13 @@ public class ProjectServiceImpl implements ProjectService {
         log.info("프로젝트 상태 변경: id={}, status={}", id, status);
         
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + id));
         
         project.setStatus(status);
         Project updatedProject = projectRepository.save(project);
         
         log.info("프로젝트 상태 변경 완료: id={}, status={}", id, status);
-        return convertToDto(updatedProject);
+        return projectMapper.toResponseDto(updatedProject);
     }
     
     @Override
@@ -230,7 +237,7 @@ public class ProjectServiceImpl implements ProjectService {
         
         List<Project> projects = projectRepository.findByStartDateBetween(startDate, endDate);
         return projects.stream()
-                .map(this::convertToDto)
+                .map(projectMapper::toResponseDto)
                 .collect(Collectors.toList());
     }
     
@@ -240,7 +247,7 @@ public class ProjectServiceImpl implements ProjectService {
         log.info("프로젝트 진행률 계산: id={}", id);
         
         Project project = projectRepository.findByIdWithTasks(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", id));
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + id));
         
         Double progress = project.calculateProgress();
         

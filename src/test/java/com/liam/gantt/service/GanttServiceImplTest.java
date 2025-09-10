@@ -10,6 +10,9 @@ import com.liam.gantt.entity.enums.TaskStatus;
 import com.liam.gantt.exception.ProjectNotFoundException;
 import com.liam.gantt.repository.ProjectRepository;
 import com.liam.gantt.repository.TaskRepository;
+import com.liam.gantt.repository.TaskDependencyRepository;
+import com.liam.gantt.service.ProjectService;
+import com.liam.gantt.service.TaskService;
 import com.liam.gantt.service.impl.GanttServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +50,15 @@ class GanttServiceImplTest {
 
     @Mock
     private TaskRepository taskRepository;
+    
+    @Mock
+    private TaskDependencyRepository dependencyRepository;
+    
+    @Mock
+    private ProjectService projectService;
+    
+    @Mock
+    private TaskService taskService;
 
     @InjectMocks
     private GanttServiceImpl ganttService;
@@ -114,8 +126,38 @@ class GanttServiceImplTest {
         void getGanttChartData_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
+            testProject.setId(projectId);
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .build();
+                    
+            List<TaskResponseDto> mockTaskDtos = List.of(
+                TaskResponseDto.builder()
+                    .id(1L)
+                    .name("기획 단계")
+                    .status(TaskStatus.COMPLETED)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(2L)
+                    .name("개발 단계")
+                    .status(TaskStatus.IN_PROGRESS)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(3L)
+                    .name("테스트 단계")
+                    .status(TaskStatus.NOT_STARTED)
+                    .build()
+            );
+            
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(mockTaskDtos);
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
@@ -139,13 +181,9 @@ class GanttServiceImplTest {
             assertThat(tasks.get(1).getName()).isEqualTo("개발 단계");
             assertThat(tasks.get(2).getName()).isEqualTo("테스트 단계");
 
-            // 타임라인 정보 검증 (if timeline structure is different, we'll fix this separately)
-            // TimelineInfo timeline = result.getTimeline();
-            // assertThat(timeline.getStartDate()).isEqualTo(projectStartDate);
-            // assertThat(timeline.getEndDate()).isEqualTo(projectEndDate);
-
-            verify(projectRepository).findById(projectId);
-            verify(taskRepository).findByProjectIdOrderByStartDateAsc(projectId);
+            verify(projectRepository).findByIdWithTasks(projectId);
+            verify(projectService).findById(projectId);
+            verify(taskService).findTaskHierarchyByProjectId(projectId);
         }
 
         @Test
@@ -153,14 +191,14 @@ class GanttServiceImplTest {
         void getGanttChartData_ProjectNotFound_ThrowsException() {
             // Given
             Long projectId = 999L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.empty());
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> ganttService.getGanttChart(projectId))
                     .isInstanceOf(ProjectNotFoundException.class)
                     .hasMessageContaining("프로젝트를 찾을 수 없습니다");
 
-            verify(projectRepository).findById(projectId);
+            verify(projectRepository).findByIdWithTasks(projectId);
         }
 
         @Test
@@ -168,7 +206,7 @@ class GanttServiceImplTest {
         void getGanttChartData_NoTasks_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
             given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(Arrays.asList());
 
             // When
@@ -183,7 +221,7 @@ class GanttServiceImplTest {
             List<TaskResponseDto> tasks = result.getTasks();
             assertThat(tasks).isEmpty();
 
-            verify(projectRepository).findById(projectId);
+            verify(projectRepository).findByIdWithTasks(projectId);
             verify(taskRepository).findByProjectIdOrderByStartDateAsc(projectId);
         }
     }
@@ -197,7 +235,7 @@ class GanttServiceImplTest {
         void calculateTaskPosition_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
             given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
 
             // When
@@ -235,7 +273,7 @@ class GanttServiceImplTest {
         void calculateProjectProgress_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
             given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
 
             // When
@@ -256,7 +294,7 @@ class GanttServiceImplTest {
         void calculateCompletedTasks_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
             given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
 
             // When
@@ -281,7 +319,7 @@ class GanttServiceImplTest {
         void calculateTimeline_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
             given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
 
             // When
@@ -307,7 +345,7 @@ class GanttServiceImplTest {
         void calculateWorkingDays_Success() {
             // Given
             Long projectId = 1L;
-            given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
+            given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
             given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
 
             // When

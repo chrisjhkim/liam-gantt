@@ -11,6 +11,7 @@ import com.liam.gantt.exception.TaskNotFoundException;
 import com.liam.gantt.mapper.TaskMapper;
 import com.liam.gantt.repository.ProjectRepository;
 import com.liam.gantt.repository.TaskRepository;
+import com.liam.gantt.repository.TaskDependencyRepository;
 import com.liam.gantt.service.impl.TaskServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +50,9 @@ class TaskServiceImplTest {
 
     @Mock
     private ProjectRepository projectRepository;
+    
+    @Mock
+    private TaskDependencyRepository dependencyRepository;
 
     @Mock
     private TaskMapper taskMapper;
@@ -70,6 +74,7 @@ class TaskServiceImplTest {
                 .endDate(LocalDate.now().plusDays(30))
                 .status(ProjectStatus.IN_PROGRESS)
                 .build();
+        testProject.setId(1L);
 
         testTask = Task.builder()
                 .project(testProject)
@@ -81,6 +86,7 @@ class TaskServiceImplTest {
                 .progress(BigDecimal.valueOf(30.0))
                 .status(TaskStatus.IN_PROGRESS)
                 .build();
+        testTask.setId(1L);
 
         testRequestDto = TaskRequestDto.builder()
                 .name("테스트 태스크")
@@ -92,6 +98,7 @@ class TaskServiceImplTest {
                 .build();
 
         testResponseDto = TaskResponseDto.builder()
+                .id(1L)
                 .projectId(1L)
                 .name("테스트 태스크")
                 .description("테스트용 태스크")
@@ -196,7 +203,7 @@ class TaskServiceImplTest {
             Long projectId = 1L;
             List<Task> tasks = Arrays.asList(testTask);
             
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(tasks);
+            given(taskRepository.findByProjectId(projectId)).willReturn(tasks);
             given(taskMapper.toResponseDto(testTask)).willReturn(testResponseDto);
 
             // When
@@ -207,7 +214,7 @@ class TaskServiceImplTest {
             assertThat(result.get(0).getProjectId()).isEqualTo(projectId);
             assertThat(result.get(0).getName()).isEqualTo("테스트 태스크");
 
-            verify(taskRepository).findByProjectIdOrderByStartDateAsc(projectId);
+            verify(taskRepository).findByProjectId(projectId);
             verify(taskMapper).toResponseDto(testTask);
         }
 
@@ -263,6 +270,7 @@ class TaskServiceImplTest {
 
             given(taskRepository.findById(taskId)).willReturn(Optional.of(testTask));
             willDoNothing().given(taskMapper).updateEntity(testTask, updateRequestDto);
+            given(taskRepository.save(testTask)).willReturn(testTask);
             given(taskMapper.toResponseDto(testTask)).willReturn(updatedResponseDto);
 
             // When
@@ -275,6 +283,7 @@ class TaskServiceImplTest {
 
             verify(taskRepository).findById(taskId);
             verify(taskMapper).updateEntity(testTask, updateRequestDto);
+            verify(taskRepository).save(testTask);
             verify(taskMapper).toResponseDto(testTask);
         }
 
@@ -304,14 +313,16 @@ class TaskServiceImplTest {
         void deleteTask_Success() {
             // Given
             Long taskId = 1L;
-            given(taskRepository.existsById(taskId)).willReturn(true);
+            given(taskRepository.findById(taskId)).willReturn(Optional.of(testTask));
+            willDoNothing().given(dependencyRepository).deleteByPredecessorIdOrSuccessorId(taskId, taskId);
             willDoNothing().given(taskRepository).deleteById(taskId);
 
             // When
             taskService.delete(taskId);
 
             // Then
-            verify(taskRepository).existsById(taskId);
+            verify(taskRepository).findById(taskId);
+            verify(dependencyRepository).deleteByPredecessorIdOrSuccessorId(taskId, taskId);
             verify(taskRepository).deleteById(taskId);
         }
 
@@ -320,14 +331,14 @@ class TaskServiceImplTest {
         void deleteTask_NotFound_ThrowsException() {
             // Given
             Long taskId = 999L;
-            given(taskRepository.existsById(taskId)).willReturn(false);
+            given(taskRepository.findById(taskId)).willReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() -> taskService.delete(taskId))
                     .isInstanceOf(TaskNotFoundException.class)
                     .hasMessageContaining("태스크를 찾을 수 없습니다");
 
-            verify(taskRepository).existsById(taskId);
+            verify(taskRepository).findById(taskId);
             verify(taskRepository, never()).deleteById(any());
         }
     }

@@ -32,14 +32,7 @@ class ProjectMapperTest {
     void setUp() {
         taskMapper = mock(TaskMapper.class);
         projectMapper = new ProjectMapper();
-        // TaskMapper를 주입하기 위해 리플렉션 사용
-        try {
-            java.lang.reflect.Field field = ProjectMapper.class.getDeclaredField("taskMapper");
-            field.setAccessible(true);
-            field.set(projectMapper, taskMapper);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // TaskMapper는 현재 사용되지 않으므로 주입하지 않음
 
         testProject = Project.builder()
                 .name("테스트 프로젝트")

@@ -62,6 +62,7 @@ class ProjectServiceImplTest {
                 .endDate(LocalDate.now().plusDays(30))
                 .status(ProjectStatus.PLANNING)
                 .build();
+        testProject.setId(1L);
 
         testRequestDto = ProjectRequestDto.builder()
                 .name("테스트 프로젝트")
@@ -71,6 +72,7 @@ class ProjectServiceImplTest {
                 .build();
 
         testResponseDto = ProjectResponseDto.builder()
+                .id(1L)
                 .name("테스트 프로젝트")
                 .description("테스트용 프로젝트입니다")
                 .startDate(LocalDate.now())
@@ -239,6 +241,7 @@ class ProjectServiceImplTest {
             given(projectRepository.findById(projectId)).willReturn(Optional.of(testProject));
             given(projectRepository.existsByNameAndIdNot(updateRequestDto.getName(), projectId)).willReturn(false);
             willDoNothing().given(projectMapper).updateEntity(testProject, updateRequestDto);
+            given(projectRepository.save(testProject)).willReturn(testProject);
             given(projectMapper.toResponseDto(testProject)).willReturn(updatedResponseDto);
 
             // When
@@ -251,6 +254,7 @@ class ProjectServiceImplTest {
             verify(projectRepository).findById(projectId);
             verify(projectRepository).existsByNameAndIdNot(updateRequestDto.getName(), projectId);
             verify(projectMapper).updateEntity(testProject, updateRequestDto);
+            verify(projectRepository).save(testProject);
             verify(projectMapper).toResponseDto(testProject);
         }
 

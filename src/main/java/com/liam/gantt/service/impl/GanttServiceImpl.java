@@ -9,7 +9,8 @@ import com.liam.gantt.entity.Project;
 import com.liam.gantt.entity.Task;
 import com.liam.gantt.entity.TaskDependency;
 import com.liam.gantt.exception.InvalidRequestException;
-import com.liam.gantt.exception.ResourceNotFoundException;
+import com.liam.gantt.exception.ProjectNotFoundException;
+import com.liam.gantt.exception.TaskNotFoundException;
 import com.liam.gantt.repository.ProjectRepository;
 import com.liam.gantt.repository.TaskDependencyRepository;
 import com.liam.gantt.repository.TaskRepository;
@@ -45,7 +46,7 @@ public class GanttServiceImpl implements GanttService {
         
         // 프로젝트 조회
         Project project = projectRepository.findByIdWithTasks(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", "id", projectId));
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + projectId));
         
         // 프로젝트 DTO 생성
         ProjectResponseDto projectDto = projectService.findById(projectId);
@@ -90,10 +91,10 @@ public class GanttServiceImpl implements GanttService {
         
         // 태스크 존재 확인
         Task predecessor = taskRepository.findById(requestDto.getPredecessorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Predecessor Task", "id", requestDto.getPredecessorId()));
+                .orElseThrow(() -> new TaskNotFoundException("선행 태스크를 찾을 수 없습니다: " + requestDto.getPredecessorId()));
         
         Task successor = taskRepository.findById(requestDto.getSuccessorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Successor Task", "id", requestDto.getSuccessorId()));
+                .orElseThrow(() -> new TaskNotFoundException("후행 태스크를 찾을 수 없습니다: " + requestDto.getSuccessorId()));
         
         // 같은 프로젝트 소속인지 확인
         if (!predecessor.getProject().getId().equals(successor.getProject().getId())) {
@@ -131,7 +132,7 @@ public class GanttServiceImpl implements GanttService {
         log.info("태스크 의존성 제거: id={}", dependencyId);
         
         if (!dependencyRepository.existsById(dependencyId)) {
-            throw new ResourceNotFoundException("Task Dependency", "id", dependencyId);
+            throw new InvalidRequestException("태스크 의존성을 찾을 수 없습니다: " + dependencyId);
         }
         
         dependencyRepository.deleteById(dependencyId);

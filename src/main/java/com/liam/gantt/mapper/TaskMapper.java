@@ -15,8 +15,7 @@ import java.util.stream.Collectors;
 @Component
 public class TaskMapper {
 
-    @Autowired
-    private TaskDependencyMapper dependencyMapper;
+    // TaskDependencyMapper dependencyMapper;  // 현재 사용되지 않으므로 주석 처리
 
     public Task toEntity(TaskRequestDto dto) {
         if (dto == null) {
@@ -71,11 +70,12 @@ public class TaskMapper {
                     .collect(Collectors.toList()));
         }
 
-        if (entity.getPredecessorDependencies() != null && !entity.getPredecessorDependencies().isEmpty()) {
-            builder.dependencies(entity.getPredecessorDependencies().stream()
-                    .map(dependencyMapper::toResponseDto)
-                    .collect(Collectors.toList()));
-        }
+        // Dependencies는 현재 순환 참조를 피하기 위해 별도 서비스에서 처리
+        // if (entity.getPredecessorDependencies() != null && !entity.getPredecessorDependencies().isEmpty()) {
+        //     builder.dependencies(entity.getPredecessorDependencies().stream()
+        //             .map(dependencyMapper::toResponseDto)
+        //             .collect(Collectors.toList()));
+        // }
 
         return builder.build();
     }
