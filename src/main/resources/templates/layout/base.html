@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null ? pageTitle + ' - Liam Gantt' : 'Liam Gantt'}">Liam Gantt</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Additional Head Content -->
+    <th:block th:fragment="head"></th:block>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">
+                <i class="fas fa-chart-gantt me-2"></i>
+                Liam Gantt
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/projects}" th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/projects') ? 'active' : ''}">
+                            <i class="fas fa-project-diagram me-1"></i>
+                            프로젝트
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/web/gantt}" th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/gantt') ? 'active' : ''}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            간트차트
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            관리자
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>설정</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>로그아웃</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" th:if="${breadcrumbs != null}">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a th:href="@{/}"><i class="fas fa-home"></i></a>
+                </li>
+                <li class="breadcrumb-item" th:each="breadcrumb : ${breadcrumbs}" 
+                    th:classappend="${breadcrumbStat.last ? 'active' : ''}"
+                    th:aria-current="${breadcrumbStat.last ? 'page' : ''}">
+                    <a th:if="${!breadcrumbStat.last}" th:href="${breadcrumb.url}" th:text="${breadcrumb.title}"></a>
+                    <span th:if="${breadcrumbStat.last}" th:text="${breadcrumb.title}"></span>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Alerts -->
+        <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${warningMessage != null}" class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${warningMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${infoMessage != null}" class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <span th:text="${infoMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Page Title -->
+        <div th:if="${pageTitle != null}" class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i th:if="${pageIcon != null}" th:class="${pageIcon} + ' me-2'"></i>
+                <span th:text="${pageTitle}"></span>
+            </h1>
+            <div th:fragment="pageActions"></div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div th:fragment="content">
+            <!-- Page content goes here -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                <i class="fas fa-copyright me-1"></i>
+                2024 Liam Gantt Chart Application. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script th:src="@{/js/app.js}"></script>
+    
+    <!-- Additional Scripts -->
+    <th:block th:fragment="scripts"></th:block>
+</body>
+</html>

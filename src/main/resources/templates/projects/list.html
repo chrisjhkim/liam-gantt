@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/base :: head"></head>
+<body>
+    <nav th:replace="layout/base :: nav"></nav>
+
+    <main class="container-fluid mt-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-project-diagram me-2"></i>
+                프로젝트 관리
+            </h1>
+            <div>
+                <a th:href="@{/web/projects/new}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>새 프로젝트
+                </a>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/web/projects}" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">프로젝트명 검색</label>
+                        <input type="text" class="form-control" id="search" name="search" th:value="${param.search}" placeholder="프로젝트명을 입력하세요">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">상태</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">전체</option>
+                            <option value="PLANNING" th:selected="${param.status == 'PLANNING'}">계획</option>
+                            <option value="IN_PROGRESS" th:selected="${param.status == 'IN_PROGRESS'}">진행중</option>
+                            <option value="COMPLETED" th:selected="${param.status == 'COMPLETED'}">완료</option>
+                            <option value="ON_HOLD" th:selected="${param.status == 'ON_HOLD'}">보류</option>
+                            <option value="CANCELLED" th:selected="${param.status == 'CANCELLED'}">취소</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sortBy" class="form-label">정렬</label>
+                        <select class="form-select" id="sortBy" name="sort">
+                            <option value="startDate,desc" th:selected="${param.sort == 'startDate,desc'}">시작일 (최신순)</option>
+                            <option value="startDate,asc" th:selected="${param.sort == 'startDate,asc'}">시작일 (오래된순)</option>
+                            <option value="name,asc" th:selected="${param.sort == 'name,asc'}">이름 (가나다순)</option>
+                            <option value="name,desc" th:selected="${param.sort == 'name,desc'}">이름 (역순)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search me-1"></i>검색
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Projects Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive" th:if="${projects != null and !projects.isEmpty()}">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>프로젝트명</th>
+                                <th>상태</th>
+                                <th>시작일</th>
+                                <th>종료일</th>
+                                <th>진행률</th>
+                                <th>태스크 수</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="project : ${projects}">
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1" th:text="${project.name}"></h6>
+                                        <small class="text-muted" th:text="${project.description}"></small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${project.status.name() == 'IN_PROGRESS' ? 'bg-primary' : 
+                                                                        project.status.name() == 'COMPLETED' ? 'bg-success' :
+                                                                        project.status.name() == 'PLANNING' ? 'bg-secondary' :
+                                                                        project.status.name() == 'ON_HOLD' ? 'bg-warning' : 'bg-danger'}"
+                                          th:text="${project.status.name() == 'PLANNING' ? '계획' :
+                                                   project.status.name() == 'IN_PROGRESS' ? '진행중' :
+                                                   project.status.name() == 'COMPLETED' ? '완료' :
+                                                   project.status.name() == 'ON_HOLD' ? '보류' : '취소'}">
+                                    </span>
+                                </td>
+                                <td th:text="${#temporals.format(project.startDate, 'yyyy-MM-dd')}"></td>
+                                <td th:text="${#temporals.format(project.endDate, 'yyyy-MM-dd')}"></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 100px;">
+                                            <div class="progress-bar" 
+                                                 th:style="'width: ' + ${project.averageProgress} + '%'"
+                                                 th:classappend="${project.averageProgress >= 100 ? 'bg-success' :
+                                                                 project.averageProgress >= 75 ? 'bg-info' :
+                                                                 project.averageProgress >= 50 ? 'bg-warning' : 'bg-danger'}">
+                                            </div>
+                                        </div>
+                                        <small th:text="${#numbers.formatDecimal(project.averageProgress, 1, 1)} + '%'"></small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary" th:text="${project.taskCount}"></span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a th:href="@{/web/projects/{id}(id=${project.id})}" class="btn btn-outline-primary" title="상세보기">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/web/gantt/{id}(id=${project.id})}" class="btn btn-outline-success" title="간트차트">
+                                            <i class="fas fa-chart-gantt"></i>
+                                        </a>
+                                        <a th:href="@{/web/projects/{id}/edit(id=${project.id})}" class="btn btn-outline-warning" title="수정">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" title="삭제" 
+                                                onclick="confirmDelete([[${project.id}]], [[${project.name}]])">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div th:if="${projects == null or projects.isEmpty()}" class="text-center py-5">
+                    <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">프로젝트가 없습니다</h5>
+                    <p class="text-muted">새로운 프로젝트를 생성해보세요.</p>
+                    <a th:href="@{/web/projects/new}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>첫 프로젝트 만들기
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${projects != null and projects.totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${projects.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/web/projects(page=${projects.number - 1}, size=${projects.size})}" tabindex="-1">이전</a>
+                </li>
+                
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, projects.totalPages - 1)}" 
+                    th:classappend="${i == projects.number} ? 'active'">
+                    <a class="page-link" th:href="@{/web/projects(page=${i}, size=${projects.size})}" th:text="${i + 1}"></a>
+                </li>
+                
+                <li class="page-item" th:classappend="${projects.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/web/projects(page=${projects.number + 1}, size=${projects.size})}">다음</a>
+                </li>
+            </ul>
+        </nav>
+    </main>
+
+    <footer th:replace="layout/base :: footer"></footer>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">프로젝트 삭제 확인</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>정말로 '<span id="projectName"></span>' 프로젝트를 삭제하시겠습니까?</p>
+                    <p class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>이 작업은 되돌릴 수 없습니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <form id="deleteForm" method="post" style="display: inline;">
+                        <input type="hidden" name="_method" value="delete">
+                        <button type="submit" class="btn btn-danger">삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:replace="layout/base :: scripts"></script>
+    <script>
+        function confirmDelete(projectId, projectName) {
+            document.getElementById('projectName').textContent = projectName;
+            document.getElementById('deleteForm').action = '/web/projects/' + projectId;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+</body>
+</html>

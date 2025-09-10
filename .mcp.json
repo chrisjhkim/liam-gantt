@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "database": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-everything"],
+      "env": {
+        "DATABASE_URL": "jdbc:h2:mem:gantt_dev",
+        "DATABASE_TYPE": "h2"
+      }
+    },
+    "mariadb": {
+      "command": "docker",
+      "args": [
+        "exec", "-i", "mariadb-container",
+        "mysql", "-u", "root", "-p${MARIADB_ROOT_PASSWORD}", "gantt"
+      ],
+      "env": {
+        "MARIADB_ROOT_PASSWORD": "rootpassword",
+        "MARIADB_DATABASE": "gantt",
+        "MARIADB_USER": "gantt_user",
+        "MARIADB_PASSWORD": "gantt_password"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "./src"],
+      "description": "File system access for source code"
+    }
+  }
+}

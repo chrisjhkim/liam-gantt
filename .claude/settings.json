@@ -1,0 +1,40 @@
+{
+  "model": "claude-3-5-sonnet-20241022",
+  "project": {
+    "name": "liam-gantt",
+    "description": "Gantt Chart Web Application",
+    "version": "1.0.0-SNAPSHOT"
+  },
+  "allowedTools": [
+    "bash", "edit", "read", "write", "grep", "glob"
+  ],
+  "buildSystem": {
+    "type": "gradle",
+    "buildCommand": "./gradlew build",
+    "testCommand": "./gradlew test",
+    "runCommand": "./gradlew bootRun",
+    "cleanCommand": "./gradlew clean"
+  },
+  "codeStyle": {
+    "language": "java",
+    "framework": "spring-boot",
+    "packageStructure": "com.liam.gantt",
+    "apiPrefix": "/api/v1",
+    "conventionalCommits": true
+  },
+  "database": {
+    "development": "H2",
+    "production": "MariaDB",
+    "migration": "Flyway"
+  },
+  "frontend": {
+    "phase1": "Thymeleaf + Bootstrap",
+    "phase2": "React + TypeScript (planned)"
+  },
+  "workflow": {
+    "gitFlow": "GitHub Flow",
+    "branchPrefix": "feature/",
+    "requireTests": true,
+    "autoFormat": true
+  }
+}

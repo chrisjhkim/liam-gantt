@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/base :: head">
+    <style>
+        .gantt-container {
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+        }
+        
+        .gantt-header {
+            background-color: #343a40;
+            color: white;
+            padding: 1rem;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .gantt-timeline {
+            display: flex;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            min-width: 800px;
+        }
+        
+        .timeline-header {
+            display: flex;
+            width: 100%;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .timeline-week {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            border-right: 1px solid #dee2e6;
+            background-color: #e9ecef;
+        }
+        
+        .gantt-body {
+            min-width: 800px;
+            background-color: white;
+        }
+        
+        .gantt-row {
+            display: flex;
+            align-items: center;
+            min-height: 50px;
+            border-bottom: 1px solid #f1f3f4;
+            position: relative;
+        }
+        
+        .gantt-row:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        
+        .task-label {
+            width: 250px;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-right: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+        
+        .task-timeline {
+            flex: 1;
+            position: relative;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+        }
+        
+        .gantt-task {
+            position: absolute;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            min-width: 20px;
+        }
+        
+        .gantt-task:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .gantt-task.not-started {
+            background-color: #6c757d;
+        }
+        
+        .gantt-task.in-progress {
+            background: linear-gradient(90deg, #28a745 0%, #28a745 var(--progress, 0%), #0d6efd var(--progress, 0%), #0d6efd 100%);
+        }
+        
+        .gantt-task.completed {
+            background-color: #28a745;
+        }
+        
+        .gantt-task.on-hold {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .gantt-task.cancelled {
+            background-color: #dc3545;
+        }
+        
+        .task-progress {
+            font-size: 0.7rem;
+            margin-left: auto;
+        }
+        
+        .timeline-grid {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: #e9ecef;
+            opacity: 0.5;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav th:replace="layout/base :: nav"></nav>
+
+    <main class="container-fluid mt-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-chart-gantt me-2"></i>
+                <span th:text="'간트차트: ' + ${project.name}">간트차트</span>
+            </h1>
+            <div>
+                <a th:href="@{/web/projects/{id}(id=${project.id})}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>프로젝트로 돌아가기
+                </a>
+                <button class="btn btn-outline-secondary" onclick="printGantt()">
+                    <i class="fas fa-print me-2"></i>인쇄
+                </button>
+            </div>
+        </div>
+
+        <!-- Project Statistics -->
+        <div class="stats-card">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="h4 mb-1" id="totalTasks">-</div>
+                        <div class="small opacity-75">전체 태스크</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="h4 mb-1" id="completedTasks">-</div>
+                        <div class="small opacity-75">완료됨</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="h4 mb-1" id="inProgressTasks">-</div>
+                        <div class="small opacity-75">진행중</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="h4 mb-1" id="overallProgress">-%</div>
+                        <div class="small opacity-75">전체 진행률</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #6c757d;"></div>
+                        <span>시작 전</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(90deg, #28a745 50%, #0d6efd 50%);"></div>
+                        <span>진행중</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #28a745;"></div>
+                        <span>완료</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ffc107;"></div>
+                        <span>보류</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #dc3545;"></div>
+                        <span>취소</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gantt Chart -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="gantt-container" id="ganttContainer">
+                    <!-- Timeline Header -->
+                    <div class="gantt-timeline">
+                        <div class="task-label" style="background-color: #343a40; color: white;">
+                            <strong>태스크명</strong>
+                        </div>
+                        <div class="timeline-header" id="timelineHeader">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </div>
+                    
+                    <!-- Gantt Body -->
+                    <div class="gantt-body" id="ganttBody">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-5 d-none">
+            <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">태스크가 없습니다</h5>
+            <p class="text-muted">이 프로젝트에 태스크를 추가해보세요.</p>
+            <a th:href="@{/web/projects/{id}(id=${project.id})}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>태스크 추가하기
+            </a>
+        </div>
+    </main>
+
+    <footer th:replace="layout/base :: footer"></footer>
+
+    <!-- Task Detail Modal -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">태스크 상세 정보</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="taskDetailBody">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" id="editTaskBtn">수정</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:replace="layout/base :: scripts"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const projectId = /*[[${project.id}]]*/ 1;
+        
+        let ganttData = {};
+        
+        // 페이지 로드 시 간트차트 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGanttData();
+        });
+        
+        async function loadGanttData() {
+            try {
+                showLoading();
+                
+                const response = await fetch(`/web/gantt/${projectId}/data`);
+                if (!response.ok) {
+                    throw new Error('데이터 로드 실패');
+                }
+                
+                ganttData = await response.json();
+                renderGanttChart();
+                updateStatistics();
+                
+            } catch (error) {
+                console.error('간트차트 데이터 로드 실패:', error);
+                showError('간트차트 데이터를 불러올 수 없습니다.');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        function renderGanttChart() {
+            const { project, tasks, timeline } = ganttData;
+            
+            if (!tasks || tasks.length === 0) {
+                showEmptyState();
+                return;
+            }
+            
+            renderTimeline(timeline);
+            renderTasks(tasks);
+        }
+        
+        function renderTimeline(timeline) {
+            const timelineHeader = document.getElementById('timelineHeader');
+            timelineHeader.innerHTML = '';
+            
+            if (timeline.weeks) {
+                timeline.weeks.forEach(week => {
+                    const weekDiv = document.createElement('div');
+                    weekDiv.className = 'timeline-week';
+                    weekDiv.textContent = week.label;
+                    timelineHeader.appendChild(weekDiv);
+                });
+            }
+        }
+        
+        function renderTasks(tasks) {
+            const ganttBody = document.getElementById('ganttBody');
+            ganttBody.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'gantt-row';
+                
+                // Task label
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'task-label';
+                labelDiv.innerHTML = `
+                    <div style="font-weight: 600;">${task.name}</div>
+                    <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
+                        ${task.startDate} ~ ${task.endDate} (${task.duration}일)
+                    </div>
+                `;
+                
+                // Task timeline
+                const timelineDiv = document.createElement('div');
+                timelineDiv.className = 'task-timeline';
+                
+                // Gantt bar
+                const ganttBar = document.createElement('div');
+                ganttBar.className = task.ganttInfo.cssClass;
+                ganttBar.style.left = task.ganttInfo.leftPercent + '%';
+                ganttBar.style.width = task.ganttInfo.widthPercent + '%';
+                
+                if (task.ganttInfo.progressStyle) {
+                    ganttBar.style.setProperty('--progress', task.progress + '%');
+                }
+                
+                ganttBar.innerHTML = `
+                    <span>${task.name}</span>
+                    ${task.progress > 0 ? '<span class="task-progress">' + task.progress + '%</span>' : ''}
+                `;
+                
+                // 클릭 이벤트
+                ganttBar.addEventListener('click', () => showTaskDetail(task));
+                
+                timelineDiv.appendChild(ganttBar);
+                
+                rowDiv.appendChild(labelDiv);
+                rowDiv.appendChild(timelineDiv);
+                
+                ganttBody.appendChild(rowDiv);
+            });
+        }
+        
+        function updateStatistics() {
+            const stats = ganttData.statistics;
+            if (!stats) return;
+            
+            document.getElementById('totalTasks').textContent = stats.totalTasks || 0;
+            document.getElementById('completedTasks').textContent = stats.completedTasks || 0;
+            document.getElementById('inProgressTasks').textContent = stats.inProgressTasks || 0;
+            document.getElementById('overallProgress').textContent = (stats.overallProgress || 0) + '%';
+        }
+        
+        function showTaskDetail(task) {
+            const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
+            const body = document.getElementById('taskDetailBody');
+            
+            body.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>기본 정보</h6>
+                        <dl class="row">
+                            <dt class="col-sm-4">태스크명:</dt>
+                            <dd class="col-sm-8">${task.name}</dd>
+                            
+                            <dt class="col-sm-4">시작일:</dt>
+                            <dd class="col-sm-8">${task.startDate}</dd>
+                            
+                            <dt class="col-sm-4">종료일:</dt>
+                            <dd class="col-sm-8">${task.endDate}</dd>
+                            
+                            <dt class="col-sm-4">기간:</dt>
+                            <dd class="col-sm-8">${task.duration}일</dd>
+                            
+                            <dt class="col-sm-4">진행률:</dt>
+                            <dd class="col-sm-8">
+                                <div class="progress" style="width: 100px; display: inline-block;">
+                                    <div class="progress-bar" style="width: ${task.progress}%"></div>
+                                </div>
+                                ${task.progress}%
+                            </dd>
+                            
+                            <dt class="col-sm-4">상태:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-${getStatusColor(task.status)}">
+                                    ${getStatusLabel(task.status)}
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>설명</h6>
+                        <p>${task.description || '설명이 없습니다.'}</p>
+                        
+                        ${task.dependencies ? '<h6>의존성</h6><ul>' + 
+                        task.dependencies.map(dep => '<li>태스크 #' + dep.predecessorId + ' (' + dep.type + ')</li>').join('') + 
+                        '</ul>' : ''}
+                    </div>
+                </div>
+            `;
+            
+            modal.show();
+        }
+        
+        function getStatusColor(status) {
+            const colors = {
+                'NOT_STARTED': 'secondary',
+                'IN_PROGRESS': 'primary',
+                'COMPLETED': 'success',
+                'ON_HOLD': 'warning',
+                'CANCELLED': 'danger'
+            };
+            return colors[status] || 'secondary';
+        }
+        
+        function getStatusLabel(status) {
+            const labels = {
+                'NOT_STARTED': '시작 전',
+                'IN_PROGRESS': '진행중',
+                'COMPLETED': '완료',
+                'ON_HOLD': '보류',
+                'CANCELLED': '취소'
+            };
+            return labels[status] || '알 수 없음';
+        }
+        
+        function showLoading() {
+            document.getElementById('ganttContainer').style.opacity = '0.5';
+        }
+        
+        function hideLoading() {
+            document.getElementById('ganttContainer').style.opacity = '1';
+        }
+        
+        function showError(message) {
+            LiamGantt.showToast(message, 'danger', 5000);
+        }
+        
+        function showEmptyState() {
+            document.getElementById('ganttContainer').classList.add('d-none');
+            document.getElementById('emptyState').classList.remove('d-none');
+        }
+        
+        function printGantt() {
+            window.print();
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

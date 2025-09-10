@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/base :: head"></head>
+<body>
+    <nav th:replace="layout/base :: nav"></nav>
+
+    <main class="container mt-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-project-diagram me-2"></i>
+                <span th:text="${project.id != null ? '프로젝트 수정' : '새 프로젝트'}"></span>
+            </h1>
+            <div>
+                <a th:href="@{/web/projects}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>목록으로
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form th:action="${project.id != null ? '/web/projects/' + project.id : '/web/projects'}" 
+                              th:method="${project.id != null ? 'put' : 'post'}" 
+                              th:object="${project}" 
+                              novalidate>
+                            
+                            <!-- Project Name -->
+                            <div class="mb-3">
+                                <label for="name" class="form-label">프로젝트명 <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" 
+                                       id="name" 
+                                       th:field="*{name}" 
+                                       placeholder="프로젝트명을 입력하세요" 
+                                       required 
+                                       maxlength="200">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+
+                            <!-- Project Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">프로젝트 설명</label>
+                                <textarea class="form-control" 
+                                          th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'" 
+                                          id="description" 
+                                          th:field="*{description}" 
+                                          rows="4" 
+                                          placeholder="프로젝트에 대한 설명을 입력하세요" 
+                                          maxlength="1000"></textarea>
+                                <div class="form-text">최대 1,000자까지 입력할 수 있습니다.</div>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label">시작일 <span class="text-danger">*</span></label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid'" 
+                                               id="startDate" 
+                                               th:field="*{startDate}" 
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label">종료일 <span class="text-danger">*</span></label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'" 
+                                               id="endDate" 
+                                               th:field="*{endDate}" 
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Project Status (for edit only) -->
+                            <div th:if="${project.id != null}" class="mb-3">
+                                <label for="status" class="form-label">프로젝트 상태</label>
+                                <select class="form-select" 
+                                        th:classappend="${#fields.hasErrors('status')} ? 'is-invalid'" 
+                                        id="status" 
+                                        th:field="*{status}">
+                                    <option value="PLANNING">계획</option>
+                                    <option value="IN_PROGRESS">진행중</option>
+                                    <option value="COMPLETED">완료</option>
+                                    <option value="ON_HOLD">보류</option>
+                                    <option value="CANCELLED">취소</option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-end gap-2">
+                                <a th:href="@{/web/projects}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>취소
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    <span th:text="${project.id != null ? '수정' : '생성'}"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Additional Information for Edit -->
+                <div th:if="${project.id != null}" class="card mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title">프로젝트 정보</h6>
+                        <dl class="row">
+                            <dt class="col-sm-3">생성일:</dt>
+                            <dd class="col-sm-9" th:text="${#temporals.format(project.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+                            
+                            <dt class="col-sm-3">수정일:</dt>
+                            <dd class="col-sm-9" th:text="${#temporals.format(project.updatedAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+                            
+                            <dt class="col-sm-3" th:if="${project.taskCount != null}">태스크 수:</dt>
+                            <dd class="col-sm-9" th:if="${project.taskCount != null}">
+                                <span class="badge bg-secondary" th:text="${project.taskCount}"></span>
+                            </dd>
+                            
+                            <dt class="col-sm-3" th:if="${project.averageProgress != null}">평균 진행률:</dt>
+                            <dd class="col-sm-9" th:if="${project.averageProgress != null}">
+                                <div class="d-flex align-items-center">
+                                    <div class="progress me-2" style="width: 150px;">
+                                        <div class="progress-bar" 
+                                             th:style="'width: ' + ${project.averageProgress} + '%'"
+                                             th:classappend="${project.averageProgress >= 100 ? 'bg-success' :
+                                                             project.averageProgress >= 75 ? 'bg-info' :
+                                                             project.averageProgress >= 50 ? 'bg-warning' : 'bg-danger'}">
+                                        </div>
+                                    </div>
+                                    <span th:text="${#numbers.formatDecimal(project.averageProgress, 1, 1)} + '%'"></span>
+                                </div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="layout/base :: footer"></footer>
+
+    <script th:replace="layout/base :: scripts"></script>
+    <script>
+        // Form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
+            // Validate date range
+            function validateDates() {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+
+                if (startDate && endDate && startDate > endDate) {
+                    endDateInput.setCustomValidity('종료일은 시작일보다 늦어야 합니다.');
+                } else {
+                    endDateInput.setCustomValidity('');
+                }
+            }
+
+            startDateInput.addEventListener('change', validateDates);
+            endDateInput.addEventListener('change', validateDates);
+
+            // Bootstrap form validation
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+</body>
+</html>

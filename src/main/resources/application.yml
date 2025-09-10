@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: liam-gantt
+    
+  # 데이터베이스 설정
+  datasource:
+    url: jdbc:h2:mem:gantt_dev;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    
+  # H2 콘솔 활성화 (개발 환경)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+        
+  # JPA 설정
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: validate  # Flyway가 스키마를 관리하므로 validate만
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+        use_sql_comments: true
+        jdbc:
+          time_zone: Asia/Seoul
+    defer-datasource-initialization: false
+    
+  # Flyway 설정
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    sql-migration-prefix: V
+    sql-migration-suffixes: .sql
+    sql-migration-separator: __
+    table: flyway_schema_history
+    validate-on-migrate: true
+    
+# 로깅 설정
+logging:
+  level:
+    root: INFO
+    com.liam.gantt: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.flywaydb: DEBUG
+    
+# 서버 설정
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
