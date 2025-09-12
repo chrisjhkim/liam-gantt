@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/base :: head"></head>
+<body>
+    <nav th:replace="layout/base :: nav"></nav>
+
+    <main class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1>프로젝트 상세</h1>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 th:text="${project.name}">프로젝트명</h5>
+                        <p th:text="${project.description}">프로젝트 설명</p>
+                        <p>시작일: <span th:text="${project.startDate}">시작일</span></p>
+                        <p>종료일: <span th:text="${project.endDate}">종료일</span></p>
+                        <p>상태: <span th:text="${project.status}">상태</span></p>
+                        <p>진행률: <span th:text="${project.progress}">진행률</span>%</p>
+                        
+                        <div th:if="${project.tasks != null and not #lists.isEmpty(project.tasks)}">
+                            <h6>태스크 목록:</h6>
+                            <ul>
+                                <li th:each="task : ${project.tasks}" th:text="${task.name}">태스크명</li>
+                            </ul>
+                        </div>
+                        <div th:unless="${project.tasks != null and not #lists.isEmpty(project.tasks)}">
+                            <p>등록된 태스크가 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="layout/base :: footer"></footer>
+    <script th:replace="layout/base :: scripts"></script>
+</body>
+</html>
