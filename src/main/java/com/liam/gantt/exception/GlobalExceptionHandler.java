@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -115,4 +116,19 @@ public class GlobalExceptionHandler {
         ApiResponse<Void> response = ApiResponse.error("INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<String>> handleResourceNotFound(NoResourceFoundException e) {
+        // 특정 리소스는 로그 레벨을 낮추거나 무시
+        if (e.getMessage().contains("favicon.ico") ||
+                e.getMessage().contains(".well-known")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("NOT_FOUND", "Resource not found"));
+        }
+
+        log.error("리소스를 찾을 수 없습니다: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("NOT_FOUND","리소스를 찾을 수 없습니다"));
+    }
+
 }

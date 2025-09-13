@@ -36,13 +36,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/web/projects}" th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/projects') ? 'active' : ''}">
+                        <a class="nav-link" th:href="@{/web/projects}" th:classappend="${activePage == 'projects' ? 'active' : ''}">
                             <i class="fas fa-project-diagram me-1"></i>
                             프로젝트
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" th:href="@{/web/gantt}" th:classappend="${#strings.contains(#httpServletRequest.requestURI, '/gantt') ? 'active' : ''}">
+                        <a class="nav-link" th:href="@{/web/gantt}" th:classappend="${activePage == 'gantt' ? 'active' : ''}">
                             <i class="fas fa-chart-bar me-1"></i>
                             간트차트
                         </a>

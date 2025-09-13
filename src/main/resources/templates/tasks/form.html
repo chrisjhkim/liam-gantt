@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/base :: head">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>태스크 폼 - Liam Gantt</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav th:replace="layout/base :: nav" class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-chart-gantt me-2"></i>Liam Gantt</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link active" href="#"><i class="fas fa-project-diagram me-1"></i>프로젝트</a>
+                <a class="nav-link" href="#"><i class="fas fa-chart-bar me-1"></i>간트차트</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    <span th:text="${taskId != null ? '태스크 수정' : '새 태스크'}">새 태스크</span>
+                </h1>
+                <nav aria-label="breadcrumb" class="mt-2">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/web/projects}">프로젝트</a></li>
+                        <li class="breadcrumb-item">
+                            <a th:href="@{/web/projects/{id}(id=${project.id})}" th:text="${project.name}"></a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a th:href="@{/web/projects/{id}/tasks(id=${project.id})}">태스크</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page" 
+                            th:text="${taskId != null ? '수정' : '생성'}"></li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <a th:href="@{/web/projects/{id}/tasks(id=${project.id})}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>목록으로
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form th:action="${taskId != null ? '/web/tasks/' + taskId : '/web/projects/' + project.id + '/tasks'}" 
+                              th:method="post" 
+                              th:object="${task}" 
+                              novalidate>
+                            
+                            <!-- Task Name -->
+                            <div class="mb-3">
+                                <label for="name" class="form-label">태스크명 <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" 
+                                       id="name" 
+                                       th:field="*{name}" 
+                                       placeholder="태스크명을 입력하세요" 
+                                       required 
+                                       maxlength="200">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+
+                            <!-- Task Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">태스크 설명</label>
+                                <textarea class="form-control" 
+                                          th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'" 
+                                          id="description" 
+                                          th:field="*{description}" 
+                                          rows="3" 
+                                          placeholder="태스크에 대한 상세 설명을 입력하세요" 
+                                          maxlength="1000"></textarea>
+                                <div class="form-text">최대 1,000자까지 입력할 수 있습니다.</div>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="startDate" class="form-label">시작일 <span class="text-danger">*</span></label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid'" 
+                                               id="startDate" 
+                                               th:field="*{startDate}" 
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="endDate" class="form-label">종료일 <span class="text-danger">*</span></label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'" 
+                                               id="endDate" 
+                                               th:field="*{endDate}" 
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Duration and Progress -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="duration" class="form-label">작업 기간 (일) <span class="text-danger">*</span></label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               th:classappend="${#fields.hasErrors('duration')} ? 'is-invalid'" 
+                                               id="duration" 
+                                               th:field="*{duration}" 
+                                               min="1" 
+                                               max="365" 
+                                               required>
+                                        <div class="form-text">1일 이상 365일 이하로 입력해주세요.</div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('duration')}" th:errors="*{duration}"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="progress" class="form-label">진행률 (%)</label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   th:classappend="${#fields.hasErrors('progress')} ? 'is-invalid'" 
+                                                   id="progress" 
+                                                   th:field="*{progress}" 
+                                                   min="0" 
+                                                   max="100" 
+                                                   step="0.1">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('progress')}" th:errors="*{progress}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status and Parent Task -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="status" class="form-label">태스크 상태</label>
+                                        <select class="form-select" 
+                                                th:classappend="${#fields.hasErrors('status')} ? 'is-invalid'" 
+                                                id="status" 
+                                                th:field="*{status}">
+                                            <option value="NOT_STARTED">시작 전</option>
+                                            <option value="IN_PROGRESS">진행 중</option>
+                                            <option value="COMPLETED">완료</option>
+                                            <option value="ON_HOLD">보류</option>
+                                            <option value="CANCELLED">취소</option>
+                                        </select>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="parentTaskId" class="form-label">상위 태스크</label>
+                                        <select class="form-select" 
+                                                th:classappend="${#fields.hasErrors('parentTaskId')} ? 'is-invalid'" 
+                                                id="parentTaskId" 
+                                                th:field="*{parentTaskId}">
+                                            <option value="">상위 태스크 없음</option>
+                                            <option th:each="availableTask : ${availableTasks}"
+                                                    th:value="${availableTask.id}"
+                                                    th:text="${availableTask.name}">
+                                            </option>
+                                        </select>
+                                        <div class="form-text">하위 태스크로 설정할 경우 선택하세요.</div>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('parentTaskId')}" th:errors="*{parentTaskId}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-end gap-2">
+                                <a th:href="@{/web/projects/{id}/tasks(id=${project.id})}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>취소
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    <span th:text="${taskId != null ? '수정' : '생성'}"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Project Info Card for Context -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title">프로젝트 정보</h6>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <p class="card-text text-muted mb-2" th:text="${project.description}"></p>
+                                <div class="small text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    <span th:text="${#temporals.format(project.startDate, 'yyyy-MM-dd')}"></span>
+                                    ~
+                                    <span th:text="${#temporals.format(project.endDate, 'yyyy-MM-dd')}"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted">프로젝트 진행률</span>
+                                    <span class="small" th:text="${#numbers.formatDecimal(project.averageProgress, 1, 1)} + '%'"></span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar" 
+                                         th:style="'width: ' + ${project.averageProgress} + '%'"
+                                         th:classappend="${project.averageProgress >= 100 ? 'bg-success' :
+                                                         project.averageProgress >= 75 ? 'bg-info' :
+                                                         project.averageProgress >= 50 ? 'bg-warning' : 'bg-danger'}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="layout/base :: footer" class="bg-light py-4 mt-5">
+        <!-- 정적 프로토타입용 푸터 -->
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                <i class="fas fa-copyright me-1"></i>
+                2024 Liam Gantt Chart Application. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script th:replace="layout/base :: scripts"></script>
+    <!-- Bootstrap JS (정적 프로토타입용) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form validation and calculations
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const durationInput = document.getElementById('duration');
+            const progressInput = document.getElementById('progress');
+            const statusSelect = document.getElementById('status');
+
+            // Auto-calculate duration when dates change
+            function calculateDuration() {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+
+                if (startDate && endDate && startDate <= endDate) {
+                    const diffTime = Math.abs(endDate - startDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    durationInput.value = diffDays;
+                }
+            }
+
+            // Validate date range
+            function validateDates() {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+
+                if (startDate && endDate && startDate > endDate) {
+                    endDateInput.setCustomValidity('종료일은 시작일보다 늦어야 합니다.');
+                } else {
+                    endDateInput.setCustomValidity('');
+                }
+            }
+
+            // Auto-update progress based on status
+            function updateProgressByStatus() {
+                const status = statusSelect.value;
+                if (status === 'COMPLETED') {
+                    progressInput.value = 100;
+                } else if (status === 'NOT_STARTED') {
+                    progressInput.value = 0;
+                }
+            }
+
+            // Event listeners
+            startDateInput.addEventListener('change', function() {
+                validateDates();
+                calculateDuration();
+            });
+
+            endDateInput.addEventListener('change', function() {
+                validateDates();
+                calculateDuration();
+            });
+
+            statusSelect.addEventListener('change', updateProgressByStatus);
+
+            // Bootstrap form validation
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+</body>
+</html>

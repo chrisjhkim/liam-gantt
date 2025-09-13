@@ -8,8 +8,8 @@
 
 ## 🚀 프로젝트 소개
 
-> **🔄 프로젝트 상태**: MVP 개발 중 (백엔드 90% 완료, 프론트엔드 개발 예정)  
-> **📅 마지막 업데이트**: 2025-01-15  
+> **✅ 프로젝트 상태**: 백엔드 + REST API 완전 구현 완료 (모든 테스트 통과)  
+> **📅 마지막 업데이트**: 2025-09-12  
 > **🔧 개발 환경**: Java 21 + Spring Boot 3.5.5 + Gradle + H2 Database  
 
 Liam Gantt는 프로젝트와 태스크를 체계적으로 관리하고, 직관적인 간트 차트로 시각화할 수 있는 웹 애플리케이션입니다. 
@@ -136,7 +136,9 @@ DELETE /api/v1/tasks/{id}              # 태스크 삭제
 
 #### 간트 차트 API
 ```http
-GET    /api/v1/projects/{id}/gantt     # 간트 차트 데이터 조회
+GET    /api/v1/gantt/{projectId}       # 간트 차트 데이터 조회
+POST   /api/v1/gantt/dependencies     # 태스크 의존성 추가
+DELETE /api/v1/gantt/dependencies/{id} # 태스크 의존성 제거
 ```
 
 자세한 API 명세는 [API 문서](docs/API.md)를 참조하세요.
@@ -165,18 +167,19 @@ GET    /api/v1/projects/{id}/gantt     # 간트 차트 데이터 조회
 - **데이터베이스 설계**: Flyway 마이그레이션 (V001~V004) 완료
 - **엔티티 계층**: Project, Task, TaskDependency 엔티티 및 Enum 완료
 - **Repository 계층**: Spring Data JPA Repository 완료
-- **Service 계층**: 비즈니스 로직 및 트랜잭션 관리 완료
-- **Controller 계층**: REST API Controller 완료
+- **Service 계층**: 비즈니스 로직 및 트랜잭션 관리 완료 (ProjectService, TaskService, GanttService)
+- **Controller 계층**: REST API Controller 완료 (ProjectController, TaskController, GanttController)
+- **Web Controller**: 기본 웹 컨트롤러 완료 (HomeController, ProjectWebController)
 - **DTO 계층**: Request/Response DTO 및 매퍼 완료
 - **예외 처리**: GlobalExceptionHandler 및 커스텀 예외 완료
+- **테스트**: 단위 테스트 완전 통과 (107개 테스트 모두 성공)
 
 ### 🔄 현재 작업 중
-- **통합 테스트**: Repository 및 Service 계층 테스트 작성
-- **API 검증**: REST API 엔드포인트 테스트
+- **프론트엔드 개발**: Thymeleaf 템플릿 확장 및 간트 차트 시각화
 
 ### 📅 다음 단계 (예정)
-- **웹 UI 개발**: Thymeleaf 템플릿 및 Bootstrap 5 스타일링
-- **간트 차트 시각화**: Chart.js를 활용한 간트 차트 구현
+- **간트 차트 UI**: D3.js 또는 Chart.js 활용한 인터랙티브 간트 차트
+- **반응형 디자인**: Bootstrap 5 기반 모바일 친화적 UI
 - **사용자 인증**: Spring Security 기반 인증 시스템
 - **React 전환**: 점진적 프론트엔드 모던화
 
@@ -208,10 +211,30 @@ GET    /api/v1/projects/{id}/gantt     # 간트 차트 데이터 조회
 2. 개발 및 테스트 작성
 3. 코드 리뷰 후 메인 브랜치 병합
 
-자세한 가이드는 각 계층별 문서를 참조하세요:
-- [Controller 가이드](src/main/java/com/liam/gantt/controller/CLAUDE.md)
-- [Service 가이드](src/main/java/com/liam/gantt/service/CLAUDE.md)
-- [Repository 가이드](src/main/java/com/liam/gantt/repository/CLAUDE.md)
+## 📚 문서 구조
+
+프로젝트 문서는 체계적으로 구성되어 있습니다:
+
+### 📋 시작하기
+- **[CLAUDE.md](./CLAUDE.md)** - 프로젝트 개요 및 빠른 시작 가이드
+- **[docs/README.md](./docs/README.md)** - 문서 구조 및 작성 가이드라인
+
+### 📊 명세 및 설계
+- **[기능 명세서](./docs/specifications/FUNCTIONAL_SPECS.md)** - 사용자 관점 페이지별 기능 목록
+- **[API 명세서](./docs/specifications/API.md)** - REST API 상세 명세
+- **[데이터베이스 설계](./docs/specifications/DATABASE.md)** - 스키마 및 ERD
+
+### 🔍 분석 및 진단  
+- **[현재 이슈 분석](./docs/analysis/CURRENT_ISSUES.md)** - 애플리케이션 현황 및 문제점
+- **[디버그 리포트](./docs/analysis/debug_reports/)** - 상세 디버깅 로그
+
+### 📖 개발 가이드
+- **[전체 아키텍처](./docs/guides/ARCHITECTURE.md)** - 종합 개발 가이드
+- **[Controller 가이드](./src/main/java/com/liam/gantt/controller/CLAUDE.md)** - 웹/REST 컨트롤러
+- **[Service 가이드](./src/main/java/com/liam/gantt/service/CLAUDE.md)** - 비즈니스 로직
+- **[Repository 가이드](./src/main/java/com/liam/gantt/repository/CLAUDE.md)** - 데이터 액세스
+
+> 📏 **문서 관리**: 1500줄 초과 시 분리 검토, 2000줄 초과 시 필수 분리
 
 ## 🚀 배포
 
@@ -249,6 +272,7 @@ Liam - liam@example.com
 ### v1.0 MVP (2025 Q1) - 현재 진행 중
 - [x] ~~데이터베이스 설계 및 마이그레이션~~
 - [x] ~~백엔드 REST API 구현~~
+- [x] ~~모든 단위 테스트 통과~~
 - [ ] 웹 UI 및 간트 차트 시각화
 - [ ] 기본 CRUD 기능 완성
 - [ ] 초기 배포 환경 구성

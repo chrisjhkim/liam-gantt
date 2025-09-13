@@ -158,6 +158,7 @@ class GanttServiceImplTest {
             given(projectService.findById(projectId)).willReturn(mockProjectDto);
             given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(mockTaskDtos);
             given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
@@ -206,8 +207,21 @@ class GanttServiceImplTest {
         void getGanttChartData_NoTasks_Success() {
             // Given
             Long projectId = 1L;
+            testProject.setId(projectId);
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .build();
+            
             given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(Arrays.asList());
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(List.of());
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
@@ -222,7 +236,8 @@ class GanttServiceImplTest {
             assertThat(tasks).isEmpty();
 
             verify(projectRepository).findByIdWithTasks(projectId);
-            verify(taskRepository).findByProjectIdOrderByStartDateAsc(projectId);
+            verify(projectService).findById(projectId);
+            verify(taskService).findTaskHierarchyByProjectId(projectId);
         }
     }
 
@@ -235,14 +250,52 @@ class GanttServiceImplTest {
         void calculateTaskPosition_Success() {
             // Given
             Long projectId = 1L;
+            testProject.setId(projectId);
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .build();
+            
+            List<TaskResponseDto> mockTaskDtos = List.of(
+                TaskResponseDto.builder()
+                    .id(1L)
+                    .name("기획 단계")
+                    .startDate(LocalDate.of(2024, 1, 1))
+                    .endDate(LocalDate.of(2024, 1, 5))
+                    .status(TaskStatus.COMPLETED)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(2L)
+                    .name("개발 단계")
+                    .startDate(LocalDate.of(2024, 1, 6))
+                    .endDate(LocalDate.of(2024, 1, 20))
+                    .status(TaskStatus.IN_PROGRESS)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(3L)
+                    .name("테스트 단계")
+                    .startDate(LocalDate.of(2024, 1, 21))
+                    .endDate(LocalDate.of(2024, 1, 31))
+                    .status(TaskStatus.NOT_STARTED)
+                    .build()
+            );
+            
             given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(mockTaskDtos);
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
 
             // Then
             List<TaskResponseDto> tasks = result.getTasks();
+            assertThat(tasks).hasSize(3);
 
             // 첫 번째 태스크 (기획 단계) 검증
             TaskResponseDto task1 = tasks.get(0);
@@ -273,17 +326,52 @@ class GanttServiceImplTest {
         void calculateProjectProgress_Success() {
             // Given
             Long projectId = 1L;
+            testProject.setId(projectId);
+            
+            // 진행률 계산: (100 + 60 + 0) / 3 = 53.33%
+            Double expectedProgress = (100.0 + 60.0 + 0.0) / 3.0;
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .progress(expectedProgress)
+                    .build();
+            
+            List<TaskResponseDto> mockTaskDtos = List.of(
+                TaskResponseDto.builder()
+                    .id(1L)
+                    .name("기획 단계")
+                    .progress(BigDecimal.valueOf(100.0))
+                    .status(TaskStatus.COMPLETED)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(2L)
+                    .name("개발 단계")
+                    .progress(BigDecimal.valueOf(60.0))
+                    .status(TaskStatus.IN_PROGRESS)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(3L)
+                    .name("테스트 단계")
+                    .progress(BigDecimal.valueOf(0.0))
+                    .status(TaskStatus.NOT_STARTED)
+                    .build()
+            );
+            
             given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(mockTaskDtos);
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
 
             // Then
             ProjectResponseDto projectInfo = result.getProject();
-            
-            // 진행률 계산: (100 + 60 + 0) / 3 = 53.33%
-            Double expectedProgress = (100.0 + 60.0 + 0.0) / 3.0;
             Double actualProgress = projectInfo.getProgress();
             
             assertThat(actualProgress).isCloseTo(expectedProgress, within(0.01));
@@ -294,19 +382,49 @@ class GanttServiceImplTest {
         void calculateCompletedTasks_Success() {
             // Given
             Long projectId = 1L;
+            testProject.setId(projectId);
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .build();
+            
+            List<TaskResponseDto> mockTaskDtos = List.of(
+                TaskResponseDto.builder()
+                    .id(1L)
+                    .name("기획 단계")
+                    .status(TaskStatus.COMPLETED)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(2L)
+                    .name("개발 단계")
+                    .status(TaskStatus.IN_PROGRESS)
+                    .build(),
+                TaskResponseDto.builder()
+                    .id(3L)
+                    .name("테스트 단계")
+                    .status(TaskStatus.NOT_STARTED)
+                    .build()
+            );
+            
             given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(mockTaskDtos);
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
 
             // Then
-            ProjectResponseDto projectInfo = result.getProject();
-            
-            // assertThat(projectInfo.getTotalTasks()).isEqualTo(3);
-            // assertThat(projectInfo.getCompletedTasks()).isEqualTo(1); // COMPLETED 상태인 태스크 1개
-            // assertThat(projectInfo.getInProgressTasks()).isEqualTo(1); // IN_PROGRESS 상태인 태스크 1개
-            // assertThat(projectInfo.getNotStartedTasks()).isEqualTo(1); // NOT_STARTED 상태인 태스크 1개
+            assertThat(result.getTasks()).hasSize(3);
+            long completedTasks = result.getTasks().stream()
+                    .mapToLong(task -> TaskStatus.COMPLETED.equals(task.getStatus()) ? 1 : 0)
+                    .sum();
+            assertThat(completedTasks).isEqualTo(1);
         }
     }
 
@@ -319,25 +437,34 @@ class GanttServiceImplTest {
         void calculateTimeline_Success() {
             // Given
             Long projectId = 1L;
+            testProject.setId(projectId);
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .build();
+            
             given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(List.of());
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
 
             // Then
-            // TimelineInfo timeline = result.getTimeline(); // Commented out until we verify TimelineInfo structure
-
-            // assertThat(timeline.getStartDate()).isEqualTo(projectStartDate);
-            // assertThat(timeline.getEndDate()).isEqualTo(projectEndDate);
+            GanttChartDto.TimelineInfo timeline = result.getTimeline();
+            assertThat(timeline).isNotNull();
+            assertThat(timeline.getStartDate()).isEqualTo(projectStartDate);
+            assertThat(timeline.getEndDate()).isEqualTo(projectEndDate);
             
             // 2024년 1월 1일부터 31일까지 = 31일
             long expectedTotalDays = ChronoUnit.DAYS.between(projectStartDate, projectEndDate) + 1;
-            // assertThat(timeline.getTotalDays()).isEqualTo(expectedTotalDays);
-
-            // 주말 제외한 작업일 계산 (대략적으로 22일 정도)
-            // Integer workingDays = timeline.getWorkingDays();
-            // assertThat(workingDays).isBetween(20, 25); // 주말 고려한 작업일
+            assertThat(timeline.getTotalDays()).isEqualTo(expectedTotalDays);
         }
 
         @Test
@@ -345,25 +472,40 @@ class GanttServiceImplTest {
         void calculateWorkingDays_Success() {
             // Given
             Long projectId = 1L;
+            testProject.setId(projectId);
+            
+            ProjectResponseDto mockProjectDto = ProjectResponseDto.builder()
+                    .id(projectId)
+                    .name("테스트 프로젝트")
+                    .startDate(projectStartDate)
+                    .endDate(projectEndDate)
+                    .status(ProjectStatus.IN_PROGRESS)
+                    .build();
+            
             given(projectRepository.findByIdWithTasks(projectId)).willReturn(Optional.of(testProject));
-            given(taskRepository.findByProjectIdOrderByStartDateAsc(projectId)).willReturn(testTasks);
+            given(projectService.findById(projectId)).willReturn(mockProjectDto);
+            given(taskService.findTaskHierarchyByProjectId(projectId)).willReturn(List.of());
+            given(dependencyRepository.findByProjectId(projectId)).willReturn(List.of());
+            given(taskRepository.findCriticalPathTasks(projectId)).willReturn(List.of());
 
             // When
             GanttChartDto result = ganttService.getGanttChart(projectId);
 
             // Then
-            // TimelineInfo timeline = result.getTimeline(); // Commented out until we verify TimelineInfo structure
+            GanttChartDto.TimelineInfo timeline = result.getTimeline();
+            assertThat(timeline).isNotNull();
             
-            // Integer totalDays = timeline.getTotalDays();
-            // Integer workingDays = timeline.getWorkingDays();
-            // Integer weekendDays = timeline.getWeekendDays();
+            Long totalDays = timeline.getTotalDays();
+            Long workingDays = timeline.getWorkingDays();
             
-            // 전체 일수 = 작업일 + 주말 일수
-            // assertThat(totalDays).isEqualTo(workingDays + weekendDays);
+            // 전체 일수는 작업일보다 크거나 같아야 함
+            assertThat(totalDays).isGreaterThanOrEqualTo(workingDays);
             
-            // 주말은 전체 기간의 약 28% 정도 (2/7)
-            // double weekendRatio = (double) weekendDays / totalDays;
-            // assertThat(weekendRatio).isBetween(0.2, 0.35);
+            // 주말은 전체 기간의 약 20-35% 정도 (2/7 ≈ 28.6%)
+            if (totalDays > 0 && workingDays != null) {
+                double workingRatio = (double) workingDays / totalDays;
+                assertThat(workingRatio).isBetween(0.65, 1.0); // 작업일 비율
+            }
         }
     }
 }

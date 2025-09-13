@@ -1,8 +1,27 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="layout/base :: head"></head>
+<head th:replace="layout/base :: head">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로젝트 목록 - Liam Gantt</title>
+    <!-- Bootstrap CSS (정적 프로토타입용) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 <body>
-    <nav th:replace="layout/base :: nav"></nav>
+    <nav th:replace="layout/base :: nav" class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <!-- 정적 프로토타입용 네비게이션 -->
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-gantt me-2"></i>Liam Gantt
+            </a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link active" href="#"><i class="fas fa-project-diagram me-1"></i>프로젝트</a>
+                <a class="nav-link" href="#"><i class="fas fa-chart-bar me-1"></i>간트차트</a>
+            </div>
+        </div>
+    </nav>
 
     <main class="container-fluid mt-4">
         <!-- Page Header -->
@@ -61,7 +80,7 @@
         <!-- Projects Table -->
         <div class="card">
             <div class="card-body">
-                <div class="table-responsive" th:if="${projects != null and !projects.isEmpty()}">
+                <div class="table-responsive" th:if="${projects != null and !projects.isEmpty()}" style="display: none;"><!-- SSR에서만 표시 -->
                     <table class="table table-hover">
                         <thead class="table-dark">
                             <tr>
@@ -133,8 +152,111 @@
                     </table>
                 </div>
 
+                <!-- 정적 프로토타입용 샘플 데이터 -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>프로젝트명</th>
+                                <th>상태</th>
+                                <th>시작일</th>
+                                <th>종료일</th>
+                                <th>진행률</th>
+                                <th>태스크 수</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">웹사이트 리뉴얼</h6>
+                                        <small class="text-muted">전자상거래 사이트 리뉴얼 프로젝트</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">진행중</span></td>
+                                <td>2024-01-15</td>
+                                <td>2024-03-30</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 100px;">
+                                            <div class="progress-bar bg-warning" style="width: 65%"></div>
+                                        </div>
+                                        <small>65%</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">12</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                        <a href="#" class="btn btn-outline-success"><i class="fas fa-chart-gantt"></i></a>
+                                        <a href="#" class="btn btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                        <button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">모바일 앱 개발</h6>
+                                        <small class="text-muted">안드로이드/iOS 네이티브 앱 개발</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-success">완료</span></td>
+                                <td>2023-10-01</td>
+                                <td>2023-12-31</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 100px;">
+                                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                                        </div>
+                                        <small>100%</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">8</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                        <a href="#" class="btn btn-outline-success"><i class="fas fa-chart-gantt"></i></a>
+                                        <a href="#" class="btn btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                        <button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div>
+                                        <h6 class="mb-1">데이터 마이그레이션</h6>
+                                        <small class="text-muted">레거시 시스템에서 새 플랫폼으로 데이터 이전</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">계획</span></td>
+                                <td>2024-04-01</td>
+                                <td>2024-06-30</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 100px;">
+                                            <div class="progress-bar bg-danger" style="width: 0%"></div>
+                                        </div>
+                                        <small>0%</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">15</span></td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="#" class="btn btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                        <a href="#" class="btn btn-outline-success"><i class="fas fa-chart-gantt"></i></a>
+                                        <a href="#" class="btn btn-outline-warning"><i class="fas fa-edit"></i></a>
+                                        <button class="btn btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
                 <!-- Empty State -->
-                <div th:if="${projects == null or projects.isEmpty()}" class="text-center py-5">
+                <div th:if="${projects == null or projects.isEmpty()}" class="text-center py-5" style="display: none;"><!-- SSR에서만 표시 -->
                     <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
                     <h5 class="text-muted">프로젝트가 없습니다</h5>
                     <p class="text-muted">새로운 프로젝트를 생성해보세요.</p>
@@ -164,7 +286,15 @@
         </nav>
     </main>
 
-    <footer th:replace="layout/base :: footer"></footer>
+    <footer th:replace="layout/base :: footer" class="bg-light py-4 mt-5">
+        <!-- 정적 프로토타입용 푸터 -->
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                <i class="fas fa-copyright me-1"></i>
+                2024 Liam Gantt Chart Application. All rights reserved.
+            </p>
+        </div>
+    </footer>
 
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
@@ -190,6 +320,8 @@
     </div>
 
     <script th:replace="layout/base :: scripts"></script>
+    <!-- Bootstrap JS (정적 프로토타입용) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function confirmDelete(projectId, projectName) {
             document.getElementById('projectName').textContent = projectName;

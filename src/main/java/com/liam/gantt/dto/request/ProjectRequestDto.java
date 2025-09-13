@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import com.liam.gantt.entity.enums.ProjectStatus;
 
 import java.time.LocalDate;
 
@@ -32,7 +33,8 @@ public class ProjectRequestDto {
     @NotNull(message = "종료일은 필수입니다")
     private LocalDate endDate;
     
-    // 상태는 서버에서 관리하므로 요청에는 포함하지 않음
+    // 상태는 수정 시에는 필요 (생성 시에는 자동으로 PLANNING 설정됨)
+    private ProjectStatus status;
     
     /**
      * 날짜 유효성 검증

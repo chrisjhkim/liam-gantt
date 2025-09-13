@@ -36,29 +36,6 @@ public class GanttWebController {
     private final ProjectService projectService;
 
     /**
-     * 간트차트 목록 페이지 (프로젝트 선택)
-     */
-    @GetMapping
-    public String ganttList(Model model) {
-        log.info("간트차트 목록 페이지 요청");
-        
-        try {
-            List<ProjectResponseDto> projects = projectService.findAll();
-            
-            model.addAttribute("projects", projects);
-            model.addAttribute("pageTitle", "간트차트");
-            model.addAttribute("pageIcon", "fas fa-chart-gantt");
-            
-            return "gantt/list";
-            
-        } catch (Exception e) {
-            log.error("간트차트 목록 페이지 로드 실패: {}", e.getMessage(), e);
-            model.addAttribute("errorMessage", "프로젝트 목록을 불러올 수 없습니다: " + e.getMessage());
-            return "error/404";
-        }
-    }
-
-    /**
      * 간트차트 페이지 표시
      */
     @GetMapping("/{projectId}")

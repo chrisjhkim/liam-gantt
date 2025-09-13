@@ -1,5 +1,6 @@
 package com.liam.gantt.dto.request;
 
+import com.liam.gantt.entity.enums.TaskStatus;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -37,6 +38,9 @@ public class TaskRequestDto {
     @DecimalMax(value = "100.0", message = "진행률은 100 이하여야 합니다")
     @Builder.Default
     private BigDecimal progress = BigDecimal.ZERO;
+    
+    @Builder.Default
+    private TaskStatus status = TaskStatus.NOT_STARTED;
     
     // 상위 태스크 ID (계층 구조를 위해)
     private Long parentTaskId;

@@ -39,10 +39,12 @@ public class HomeController {
             model.addAttribute("completedProjects", completedProjects);
             model.addAttribute("pageTitle", "대시보드");
             model.addAttribute("pageIcon", "fas fa-tachometer-alt");
+            model.addAttribute("activePage", "home");
             
         } catch (Exception e) {
             log.error("메인 페이지 데이터 조회 실패", e);
             model.addAttribute("errorMessage", "데이터 로딩 중 오류가 발생했습니다.");
+            model.addAttribute("activePage", "home");
         }
         
         return "home";

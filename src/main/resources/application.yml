@@ -31,6 +31,15 @@ spring:
           time_zone: Asia/Seoul
     defer-datasource-initialization: false
     
+  # Thymeleaf 설정
+  thymeleaf:
+    enabled: true
+    prefix: classpath:templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false  # 개발 환경에서는 캐시 비활성화
+    
   # Flyway 설정
   flyway:
     enabled: true

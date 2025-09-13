@@ -2,11 +2,15 @@ package com.liam.gantt.controller;
 
 import com.liam.gantt.dto.request.ProjectRequestDto;
 import com.liam.gantt.dto.response.ProjectResponseDto;
+import com.liam.gantt.dto.response.TaskResponseDto;
+import com.liam.gantt.entity.enums.TaskStatus;
 import com.liam.gantt.service.ProjectService;
+import com.liam.gantt.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
@@ -15,6 +19,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Slf4j
@@ -24,6 +30,7 @@ import java.util.List;
 public class ProjectWebController {
 
     private final ProjectService projectService;
+    private final TaskService taskService;
 
     @GetMapping
     public String projectList(
@@ -53,9 +60,44 @@ public class ProjectWebController {
         log.info("프로젝트 상세 페이지 요청 - id: {}", id);
         
         try {
-            ProjectResponseDto project = projectService.findByIdWithTasks(id);
+            // 프로젝트 기본 정보 조회
+            ProjectResponseDto project = projectService.findById(id);
             
+            // 프로젝트의 태스크 목록 조회 (최근 5개만 미리보기용)
+            Page<TaskResponseDto> tasks = taskService.findByProjectIdWithPaging(
+                id, PageRequest.of(0, 10)
+            );
+            
+            // 태스크 상태별 통계 계산
+            List<TaskResponseDto> allTasks = taskService.findByProjectId(id);
+            long completedTaskCount = allTasks.stream()
+                .filter(task -> task.getStatus() == TaskStatus.COMPLETED)
+                .count();
+            long inProgressTaskCount = allTasks.stream()
+                .filter(task -> task.getStatus() == TaskStatus.IN_PROGRESS)
+                .count();
+            long notStartedTaskCount = allTasks.stream()
+                .filter(task -> task.getStatus() == TaskStatus.NOT_STARTED)
+                .count();
+            
+            // 프로젝트 일정 계산
+            LocalDate today = LocalDate.now();
+            LocalDate startDate = project.getStartDate();
+            LocalDate endDate = project.getEndDate();
+            
+            long elapsedDays = ChronoUnit.DAYS.between(startDate, today);
+            if (elapsedDays < 0) elapsedDays = 0;
+            
+            long remainingDays = ChronoUnit.DAYS.between(today, endDate);
+            
+            // 모델에 데이터 추가
             model.addAttribute("project", project);
+            model.addAttribute("tasks", tasks);
+            model.addAttribute("completedTaskCount", completedTaskCount);
+            model.addAttribute("inProgressTaskCount", inProgressTaskCount);
+            model.addAttribute("notStartedTaskCount", notStartedTaskCount);
+            model.addAttribute("elapsedDays", elapsedDays);
+            model.addAttribute("remainingDays", remainingDays);
             model.addAttribute("pageTitle", project.getName());
             model.addAttribute("pageIcon", "fas fa-project-diagram");
             
@@ -123,6 +165,7 @@ public class ProjectWebController {
                     .description(project.getDescription())
                     .startDate(project.getStartDate())
                     .endDate(project.getEndDate())
+                    .status(project.getStatus())
                     .build();
             
             model.addAttribute("project", projectRequest);

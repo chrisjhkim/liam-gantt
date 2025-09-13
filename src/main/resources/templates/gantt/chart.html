@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="layout/base :: head">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간트차트 - Liam Gantt</title>
+    <!-- Bootstrap CSS (정적 프로토타입용) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .gantt-container {
             overflow-x: auto;
@@ -167,14 +174,25 @@
     </style>
 </head>
 <body>
-    <nav th:replace="layout/base :: nav"></nav>
+    <nav th:replace="layout/base :: nav" class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <!-- 정적 프로토타입용 네비게이션 -->
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-gantt me-2"></i>Liam Gantt
+            </a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="#"><i class="fas fa-project-diagram me-1"></i>프로젝트</a>
+                <a class="nav-link active" href="#"><i class="fas fa-chart-bar me-1"></i>간트차트</a>
+            </div>
+        </div>
+    </nav>
 
     <main class="container-fluid mt-4">
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h3 mb-0">
                 <i class="fas fa-chart-gantt me-2"></i>
-                <span th:text="'간트차트: ' + ${project.name}">간트차트</span>
+                <span th:text="'간트차트: ' + ${project.name}">간트차트: 웹사이트 리뉴얼</span>
             </h1>
             <div>
                 <a th:href="@{/web/projects/{id}(id=${project.id})}" class="btn btn-outline-primary">
@@ -191,25 +209,25 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="totalTasks">-</div>
+                        <div class="h4 mb-1" id="totalTasks">12</div>
                         <div class="small opacity-75">전체 태스크</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="completedTasks">-</div>
+                        <div class="h4 mb-1" id="completedTasks">4</div>
                         <div class="small opacity-75">완료됨</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="inProgressTasks">-</div>
+                        <div class="h4 mb-1" id="inProgressTasks">6</div>
                         <div class="small opacity-75">진행중</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="overallProgress">-%</div>
+                        <div class="h4 mb-1" id="overallProgress">65%</div>
                         <div class="small opacity-75">전체 진행률</div>
                     </div>
                 </div>
@@ -254,20 +272,73 @@
                             <strong>태스크명</strong>
                         </div>
                         <div class="timeline-header" id="timelineHeader">
-                            <!-- 동적으로 생성됨 -->
+                            <!-- 정적 프로토타입용 타임라인 -->
+                            <div class="timeline-week">1월 1주</div>
+                            <div class="timeline-week">1월 2주</div>
+                            <div class="timeline-week">1월 3주</div>
+                            <div class="timeline-week">1월 4주</div>
+                            <div class="timeline-week">2월 1주</div>
+                            <div class="timeline-week">2월 2주</div>
+                            <div class="timeline-week">2월 3주</div>
+                            <div class="timeline-week">2월 4주</div>
+                            <div class="timeline-week">3월 1주</div>
+                            <div class="timeline-week">3월 2주</div>
+                            <div class="timeline-week">3월 3주</div>
+                            <div class="timeline-week">3월 4주</div>
                         </div>
                     </div>
                     
                     <!-- Gantt Body -->
                     <div class="gantt-body" id="ganttBody">
-                        <!-- 동적으로 생성됨 -->
+                        <!-- 정적 프로토타입용 샘플 간트 바 -->
+                        <div class="gantt-row">
+                            <div class="task-label">
+                                <div style="font-weight: 600;">요구사항 분석</div>
+                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
+                                    2024-01-15 ~ 2024-01-20 (5일)
+                                </div>
+                            </div>
+                            <div class="task-timeline">
+                                <div class="gantt-task completed" style="left: 5%; width: 15%;">
+                                    <span>요구사항 분석</span>
+                                    <span class="task-progress">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="gantt-row">
+                            <div class="task-label">
+                                <div style="font-weight: 600;">UI 디자인</div>
+                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
+                                    2024-01-22 ~ 2024-02-02 (10일)
+                                </div>
+                            </div>
+                            <div class="task-timeline">
+                                <div class="gantt-task in-progress" style="left: 20%; width: 25%; --progress: 70%;">
+                                    <span>UI 디자인</span>
+                                    <span class="task-progress">70%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="gantt-row">
+                            <div class="task-label">
+                                <div style="font-weight: 600;">프론트엔드 개발</div>
+                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
+                                    2024-02-05 ~ 2024-03-01 (20일)
+                                </div>
+                            </div>
+                            <div class="task-timeline">
+                                <div class="gantt-task not-started" style="left: 45%; width: 40%;">
+                                    <span>프론트엔드 개발</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="text-center py-5 d-none">
+        <!-- Empty State (정적 프로토타입에서는 숨김) -->
+        <div id="emptyState" class="text-center py-5 d-none" style="display: none !important;">
             <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
             <h5 class="text-muted">태스크가 없습니다</h5>
             <p class="text-muted">이 프로젝트에 태스크를 추가해보세요.</p>
@@ -277,7 +348,15 @@
         </div>
     </main>
 
-    <footer th:replace="layout/base :: footer"></footer>
+    <footer th:replace="layout/base :: footer" class="bg-light py-4 mt-5">
+        <!-- 정적 프로토타입용 푸터 -->
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                <i class="fas fa-copyright me-1"></i>
+                2024 Liam Gantt Chart Application. All rights reserved.
+            </p>
+        </div>
+    </footer>
 
     <!-- Task Detail Modal -->
     <div class="modal fade" id="taskDetailModal" tabindex="-1">
@@ -288,7 +367,37 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="taskDetailBody">
-                    <!-- 동적으로 생성됨 -->
+                    <!-- 정적 프로토타입용 샘플 데이터 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>기본 정보</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">태스크명:</dt>
+                                <dd class="col-sm-8">샘플 태스크</dd>
+                                <dt class="col-sm-4">시작일:</dt>
+                                <dd class="col-sm-8">2024-01-15</dd>
+                                <dt class="col-sm-4">종료일:</dt>
+                                <dd class="col-sm-8">2024-01-25</dd>
+                                <dt class="col-sm-4">기간:</dt>
+                                <dd class="col-sm-8">10일</dd>
+                                <dt class="col-sm-4">진행률:</dt>
+                                <dd class="col-sm-8">
+                                    <div class="progress" style="width: 100px; display: inline-block;">
+                                        <div class="progress-bar" style="width: 70%"></div>
+                                    </div>
+                                    70%
+                                </dd>
+                                <dt class="col-sm-4">상태:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge bg-primary">진행중</span>
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>설명</h6>
+                            <p>샘플 태스크입니다. 상세 설명이 여기에 들어갑니다.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
@@ -299,6 +408,8 @@
     </div>
 
     <script th:replace="layout/base :: scripts"></script>
+    <!-- Bootstrap JS (정적 프로토타입용) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:inline="javascript">
         /*<![CDATA[*/
         const projectId = /*[[${project.id}]]*/ 1;
