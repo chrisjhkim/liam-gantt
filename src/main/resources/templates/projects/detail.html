@@ -101,7 +101,7 @@
                             </div>
                             <div class="col-md-4">
                                 <h6 class="text-muted mb-2">작업 기간</h6>
-                                <p th:text="${project.duration} + '일'" class="fw-bold">75일</p>
+                                <p th:text="${project.durationInDays ?: 0} + '일'" class="fw-bold">75일</p>
                             </div>
                         </div>
                     </div>
@@ -163,7 +163,7 @@
                                         <div class="d-flex justify-content-center align-items-center">
                                             <i class="fas fa-clock fa-2x text-warning me-3"></i>
                                             <div>
-                                                <div class="fw-bold" th:text="${project.duration} + '일'">75일</div>
+                                                <div class="fw-bold" th:text="${project.durationInDays ?: 0} + '일'">75일</div>
                                                 <small class="text-muted">소요기간</small>
                                             </div>
                                         </div>
@@ -470,11 +470,11 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between small text-muted mb-1">
                                 <span>진행 기간</span>
-                                <span th:text="${elapsedDays ?: 0} + ' / ' + ${project.duration} + '일'">45 / 75일</span>
+                                <span th:text="${elapsedDays ?: 0} + ' / ' + ${project.durationInDays ?: 0} + '일'">45 / 75일</span>
                             </div>
                             <div class="progress" style="height: 6px;">
                                 <div class="progress-bar bg-info" 
-                                     th:style="'width: ' + ${(elapsedDays ?: 0) * 100.0 / project.duration} + '%'" style="width: 60%">
+                                     th:style="'width: ' + ${project.durationInDays != null and project.durationInDays > 0 ? (elapsedDays ?: 0) * 100.0 / project.durationInDays : 0} + '%'" style="width: 60%">
                                 </div>
                             </div>
                         </div>

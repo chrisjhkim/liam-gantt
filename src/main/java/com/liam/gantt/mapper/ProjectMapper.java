@@ -56,6 +56,13 @@ public class ProjectMapper {
         builder.averageProgress(avgProgress);
         builder.progress(avgProgress);
 
+        // durationInDays 계산
+        if (entity.getStartDate() != null && entity.getEndDate() != null) {
+            long duration = java.time.temporal.ChronoUnit.DAYS.between(
+                entity.getStartDate(), entity.getEndDate()) + 1;
+            builder.durationInDays(duration);
+        }
+
         return builder.build();
     }
 
