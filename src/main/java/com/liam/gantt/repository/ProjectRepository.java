@@ -33,6 +33,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * 프로젝트명에 특정 문자열이 포함된 프로젝트 검색
      */
     List<Project> findByNameContainingIgnoreCase(String keyword);
+
+    /**
+     * 프로젝트명에 특정 문자열이 포함된 프로젝트 검색 (페이징)
+     */
+    Page<Project> findByNameContainingIgnoreCase(String keyword, Pageable pageable);
     
     /**
      * 상태별 프로젝트 조회
@@ -126,4 +131,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * 이름과 상태로 대소문자 무관하게 검색
      */
     List<Project> findByNameContainingIgnoreCaseAndStatus(String name, ProjectStatus status);
+
+    /**
+     * 이름과 상태로 대소문자 무관하게 검색 (페이징)
+     */
+    Page<Project> findByNameContainingIgnoreCaseAndStatus(String name, ProjectStatus status, Pageable pageable);
 }

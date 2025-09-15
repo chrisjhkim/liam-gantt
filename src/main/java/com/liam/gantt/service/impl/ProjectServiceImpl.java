@@ -187,7 +187,34 @@ public class ProjectServiceImpl implements ProjectService {
     public Page<ProjectResponseDto> searchWithPaging(String name, String status, Pageable pageable) {
         log.debug("페이징된 프로젝트 검색: name={}, status={}", name, status);
 
-        Page<Project> projects = projectRepository.findAll(pageable);
+        Page<Project> projects;
+
+        if (name != null && status != null) {
+            // 이름과 상태 모두로 검색
+            try {
+                ProjectStatus projectStatus = ProjectStatus.valueOf(status);
+                projects = projectRepository.findByNameContainingIgnoreCaseAndStatus(name, projectStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 상태값인 경우 모든 프로젝트 반환
+                projects = projectRepository.findAll(pageable);
+            }
+        } else if (name != null) {
+            // 이름만으로 검색
+            projects = projectRepository.findByNameContainingIgnoreCase(name, pageable);
+        } else if (status != null) {
+            // 상태만으로 검색
+            try {
+                ProjectStatus projectStatus = ProjectStatus.valueOf(status);
+                projects = projectRepository.findByStatus(projectStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 상태값인 경우 모든 프로젝트 반환
+                projects = projectRepository.findAll(pageable);
+            }
+        } else {
+            // 모든 프로젝트 조회
+            projects = projectRepository.findAll(pageable);
+        }
+
         return projects.map(projectMapper::toResponseDto);
     }
 

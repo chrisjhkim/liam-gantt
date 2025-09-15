@@ -9,7 +9,7 @@ Liam Gantt Chart Application - Claude Code 개발 가이드
 ## 🚀 Quick Commands
 ```bash
 /build      # 프로젝트 빌드 (clean + compile + test + jar)
-/test       # 테스트 실행 (unit + integration tests)  
+/test       # 테스트 실행 (unit + integration tests)
 /clean      # 빌드 산출물 정리
 /migrate    # 데이터베이스 마이그레이션 (Flyway)
 
@@ -17,6 +17,7 @@ Liam Gantt Chart Application - Claude Code 개발 가이드
 ./gradlew bootRun    # 애플리케이션 실행 (http://localhost:8080)
 ./gradlew build      # 빌드
 ./gradlew test       # 테스트
+./gradlew --stop     # 서버 중지 (Gradle 데몬 종료)
 ```
 
 ## 📊 Project Overview
