@@ -98,4 +98,9 @@ public interface TaskService {
      * 프로젝트 내 태스크 이름으로 검색
      */
     List<TaskResponseDto> searchByName(Long projectId, String keyword);
+
+    /**
+     * 부모 태스크 ID로 하위 태스크 조회
+     */
+    List<TaskResponseDto> findByParentTaskId(Long parentTaskId);
 }

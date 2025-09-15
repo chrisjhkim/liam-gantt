@@ -369,12 +369,22 @@ public class TaskServiceImpl implements TaskService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<TaskResponseDto> findByParentTaskId(Long parentTaskId) {
+        log.debug("부모 태스크 ID로 하위 태스크 조회: parentTaskId={}", parentTaskId);
+
+        List<Task> tasks = taskRepository.findByParentTaskId(parentTaskId);
+        return tasks.stream()
+                .map(taskMapper::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
     private TaskResponseDto convertToDtoWithDependencies(Task task) {
         TaskResponseDto dto = taskMapper.toResponseDto(task);
-        
+
         // 의존성 정보는 별도 서비스에서 처리
         // GanttService에서 관리
-        
+
         return dto;
     }
 }

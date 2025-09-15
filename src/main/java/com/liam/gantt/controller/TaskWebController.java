@@ -61,16 +61,23 @@ public class TaskWebController {
     @GetMapping("/tasks/{id}")
     public String taskDetail(@PathVariable Long id, Model model) {
         log.info("태스크 상세 페이지 요청 - id: {}", id);
-        
+
         try {
             TaskResponseDto task = taskService.findByIdWithDependencies(id);
             ProjectResponseDto project = projectService.findById(task.getProjectId());
-            
+
+            // 하위 태스크 조회
+            List<TaskResponseDto> subtasks = taskService.findByParentTaskId(id);
+
+            // dependencies는 이미 task 객체에 포함되어 있음 (findByIdWithDependencies 메서드)
+
             model.addAttribute("task", task);
             model.addAttribute("project", project);
+            model.addAttribute("subtasks", subtasks);
+            model.addAttribute("dependencies", task.getDependencies());
             model.addAttribute("pageTitle", task.getName());
-            model.addAttribute("pageIcon", "fas fa-task");
-            
+            model.addAttribute("pageIcon", "fas fa-tasks");
+
             return "tasks/detail";
         } catch (Exception e) {
             log.error("태스크 조회 실패 - id: {}", id, e);
@@ -88,11 +95,11 @@ public class TaskWebController {
         
         try {
             ProjectResponseDto project = projectService.findById(projectId);
-            List<TaskResponseDto> availableTasks = taskService.findByProjectId(projectId);
+            List<TaskResponseDto> availableParentTasks = taskService.findByProjectId(projectId);
             
             model.addAttribute("task", new TaskRequestDto());
             model.addAttribute("project", project);
-            model.addAttribute("availableTasks", availableTasks);
+            model.addAttribute("availableParentTasks", availableParentTasks);
             model.addAttribute("pageTitle", "새 태스크 - " + project.getName());
             model.addAttribute("pageIcon", "fas fa-plus");
             
@@ -119,10 +126,10 @@ public class TaskWebController {
         if (bindingResult.hasErrors()) {
             try {
                 ProjectResponseDto project = projectService.findById(projectId);
-                List<TaskResponseDto> availableTasks = taskService.findByProjectId(projectId);
+                List<TaskResponseDto> availableParentTasks = taskService.findByProjectId(projectId);
                 
                 model.addAttribute("project", project);
-                model.addAttribute("availableTasks", availableTasks);
+                model.addAttribute("availableParentTasks", availableParentTasks);
                 model.addAttribute("pageTitle", "새 태스크 - " + project.getName());
                 model.addAttribute("pageIcon", "fas fa-plus");
                 
@@ -146,10 +153,10 @@ public class TaskWebController {
             
             try {
                 ProjectResponseDto project = projectService.findById(projectId);
-                List<TaskResponseDto> availableTasks = taskService.findByProjectId(projectId);
+                List<TaskResponseDto> availableParentTasks = taskService.findByProjectId(projectId);
                 
                 model.addAttribute("project", project);
-                model.addAttribute("availableTasks", availableTasks);
+                model.addAttribute("availableParentTasks", availableParentTasks);
                 model.addAttribute("errorMessage", "태스크 생성 중 오류가 발생했습니다: " + e.getMessage());
                 model.addAttribute("pageTitle", "새 태스크 - " + project.getName());
                 model.addAttribute("pageIcon", "fas fa-plus");
@@ -171,7 +178,7 @@ public class TaskWebController {
         try {
             TaskResponseDto task = taskService.findByIdWithDependencies(id);
             ProjectResponseDto project = projectService.findById(task.getProjectId());
-            List<TaskResponseDto> availableTasks = taskService.findByProjectId(task.getProjectId())
+            List<TaskResponseDto> availableParentTasks = taskService.findByProjectId(task.getProjectId())
                 .stream()
                 .filter(t -> !t.getId().equals(id)) // 자기 자신 제외
                 .toList();
@@ -191,7 +198,7 @@ public class TaskWebController {
             model.addAttribute("task", taskRequest);
             model.addAttribute("taskId", id);
             model.addAttribute("project", project);
-            model.addAttribute("availableTasks", availableTasks);
+            model.addAttribute("availableParentTasks", availableParentTasks);
             model.addAttribute("pageTitle", "태스크 수정: " + task.getName());
             model.addAttribute("pageIcon", "fas fa-edit");
             
@@ -219,14 +226,14 @@ public class TaskWebController {
             try {
                 TaskResponseDto originalTask = taskService.findById(id);
                 ProjectResponseDto project = projectService.findById(originalTask.getProjectId());
-                List<TaskResponseDto> availableTasks = taskService.findByProjectId(originalTask.getProjectId())
+                List<TaskResponseDto> availableParentTasks = taskService.findByProjectId(originalTask.getProjectId())
                     .stream()
                     .filter(t -> !t.getId().equals(id))
                     .toList();
                 
                 model.addAttribute("taskId", id);
                 model.addAttribute("project", project);
-                model.addAttribute("availableTasks", availableTasks);
+                model.addAttribute("availableParentTasks", availableParentTasks);
                 model.addAttribute("pageTitle", "태스크 수정");
                 model.addAttribute("pageIcon", "fas fa-edit");
                 
@@ -250,7 +257,7 @@ public class TaskWebController {
             try {
                 TaskResponseDto originalTask = taskService.findById(id);
                 ProjectResponseDto project = projectService.findById(originalTask.getProjectId());
-                List<TaskResponseDto> availableTasks = taskService.findByProjectId(originalTask.getProjectId())
+                List<TaskResponseDto> availableParentTasks = taskService.findByProjectId(originalTask.getProjectId())
                     .stream()
                     .filter(t -> !t.getId().equals(id))
                     .toList();
@@ -258,7 +265,7 @@ public class TaskWebController {
                 model.addAttribute("errorMessage", "태스크 수정 중 오류가 발생했습니다: " + e.getMessage());
                 model.addAttribute("taskId", id);
                 model.addAttribute("project", project);
-                model.addAttribute("availableTasks", availableTasks);
+                model.addAttribute("availableParentTasks", availableParentTasks);
                 model.addAttribute("pageTitle", "태스크 수정");
                 model.addAttribute("pageIcon", "fas fa-edit");
                 

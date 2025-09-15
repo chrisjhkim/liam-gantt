@@ -129,7 +129,9 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <button type="button" class="btn btn-outline-danger" title="삭제"
-                                                th:onclick="'confirmDelete(' + ${project.id} + ', \'' + ${project.name} + '\')'">
+                                                th:data-project-id="${project.id}"
+                                                th:data-project-name="${project.name}"
+                                                onclick="confirmDelete(this)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -197,7 +199,9 @@
 
     <script th:replace="layout/base :: scripts"></script>
     <script>
-        function confirmDelete(projectId, projectName) {
+        function confirmDelete(button) {
+            const projectId = button.getAttribute('data-project-id');
+            const projectName = button.getAttribute('data-project-name');
             document.getElementById('projectName').textContent = projectName;
             document.getElementById('deleteForm').action = '/web/projects/' + projectId;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();

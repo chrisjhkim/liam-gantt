@@ -1,333 +1,240 @@
 # Common & Home Views Specification
-> 공통 레이아웃 및 홈 페이지 View 명세서
+> 공통 레이아웃 및 홈 페이지 화면 기획서
 
 ## 📋 Overview
-홈 페이지, 공통 레이아웃, 에러 페이지 등 공통 View들의 명세입니다.
+홈 페이지(대시보드), 공통 레이아웃, 에러 페이지 등 공통으로 사용되는 화면들의 기획 명세입니다.
+
+## 📄 페이지 정의 목록
+이 문서에서 정의하는 페이지들의 고유 ID와 설명입니다.
+
+| 페이지 ID | 페이지명 | 설명 |
+|-----------|----------|------|
+| `PAGE-HOME-001` | 홈 페이지(대시보드) | 메인 대시보드 화면 |
+| `PAGE-COMMON-001` | 공통 레이아웃 | 모든 페이지에서 사용하는 기본 레이아웃 |
+| `PAGE-ERROR-001` | 에러 페이지 | 오류 발생 시 표시되는 화면 |
+| `PAGE-COMMON-002` | 공통 알림 컴포넌트 | 성공/오류/경고/정보 메시지 표시 |
+| `PAGE-COMMON-003` | 공통 페이지네이션 | 목록 페이지에서 사용하는 페이지 이동 기능 |
 
 ---
 
-## home.html
-> 메인 대시보드 페이지
+## 홈 페이지 (대시보드) {#PAGE-HOME-001}
+> 사용자가 맨 처음 보게 되는 메인 화면
 
-### Controller Mapping
-- **URL**: `/` 또는 `/web`
-- **Method**: `GET`
-- **Controller**: `HomeController#home`
-- **Description**: 대시보드 및 프로젝트 요약 정보 표시
+### 화면 구성 개요
+사용자가 웹사이트에 접속하면 가장 먼저 보게 되는 메인 대시보드 화면입니다. 프로젝트 현황을 한눈에 파악할 수 있도록 구성되어 있습니다.
 
-### Required Model Attributes
+### 1. 헤더 영역 (상단 네비게이션)
 
-| Attribute Name | Type | Required | Default | Description |
-|---------------|------|----------|---------|-------------|
-| recentProjects | `List<ProjectResponseDto>` | Yes | empty | 최근 프로젝트 5개 |
-| totalProjects | `Long` | Yes | 0 | 전체 프로젝트 수 |
-| activeProjects | `Long` | Yes | 0 | 진행중 프로젝트 수 |
-| completedProjects | `Long` | Yes | 0 | 완료된 프로젝트 수 |
-| pageTitle | `String` | Yes | "대시보드" | 페이지 제목 |
-| pageIcon | `String` | Yes | "fas fa-tachometer-alt" | 페이지 아이콘 |
-| activePage | `String` | Yes | "home" | 활성 메뉴 표시용 |
-| errorMessage | `String` | No | - | 오류 메시지 |
+#### 1-1. 브랜드 로고
+- **위치**: 헤더 왼쪽 상단
+- **표시 내용**: "Liam Gantt" 로고와 아이콘
+- **기능**: 클릭하면 홈 페이지(`PAGE-HOME-001`)로 이동
 
-### Page Elements
+#### 1-2. 메인 메뉴
+- **대시보드 메뉴**: 현재 페이지 (`PAGE-HOME-001`)로 이동
+- **프로젝트 드롭다운 메뉴**:
+  - "프로젝트 목록": 전체 프로젝트 목록 페이지(`PAGE-PROJECT-001`)로 이동
+  - "새 프로젝트": 새 프로젝트 생성 페이지(`PAGE-PROJECT-002`)로 이동
+  - "통계": 프로젝트 통계 페이지(`PAGE-PROJECT-004`) 이동 (향후 구현 예정)
+- **태스크 메뉴**: 태스크 관리 페이지(`PAGE-TASK-001`) 이동 (향후 구현 예정, 현재 비활성화)
+- **캘린더 메뉴**: 캘린더 뷰 페이지(`PAGE-CALENDAR-001`) 이동 (향후 구현 예정, 현재 비활성화)
 
-#### Dashboard Cards
-- **통계 카드**:
-  - 전체 프로젝트 수
-  - 진행중 프로젝트
-  - 완료된 프로젝트
-  - 이번 주 마감 태스크 (향후)
+#### 1-3. 사용자 메뉴 (오른쪽)
+- **사용자 드롭다운**:
+  - "프로필": 사용자 프로필 페이지(`PAGE-USER-001`) 이동 (향후 구현 예정)
+  - "설정": 시스템 설정 페이지(`PAGE-SETTINGS-001`) 이동 (향후 구현 예정)
+  - "로그아웃": 로그아웃 처리 (향후 구현 예정)
 
-#### Recent Projects Section
-- **프로젝트 카드**: 최근 5개 프로젝트
-  - 프로젝트명
-  - 진행률 바
-  - 상태 배지
-  - 시작일/종료일
-  - 빠른 링크 (상세/간트차트)
+#### 1-4. 모바일 메뉴 토글
+- **표시 조건**: 화면 크기가 작을 때만 표시
+- **기능**: 모바일에서 메뉴를 펼치거나 접을 수 있는 토글 버튼
 
-#### Quick Actions
-- **새 프로젝트**: `@{/web/projects/new}`
-- **프로젝트 목록**: `@{/web/projects}`
-- **내 태스크**: `@{/web/my-tasks}` (향후)
-- **캘린더 뷰**: `@{/web/calendar}` (향후)
+### 2. 메인 컨텐츠 영역
 
-#### Charts (향후 구현)
-- **진행률 차트**: Chart.js 도넛 차트
-- **일정 타임라인**: 이번 주/월 일정
-- **태스크 통계**: 상태별 분포
+#### 2-1. 통계 카드 섹션
+화면 상단에 4개의 카드가 가로로 배치되어 프로젝트 현황을 숫자로 보여줍니다.
 
-### Conditional Elements
-- 프로젝트 없음: `${recentProjects.isEmpty()}`
-- 오류 메시지: `${errorMessage != null}`
+##### 전체 프로젝트 카드
+- **표시 내용**: 등록된 전체 프로젝트 개수
+- **버튼**: "자세히 보기" 버튼
+- **버튼 기능**: 클릭하면 전체 프로젝트 목록 페이지(`PAGE-PROJECT-001`)로 이동
 
-### Dependencies
-- **Fragment**: `layout/base`
-- **JavaScript**: Chart.js (향후)
-- **CSS**: Bootstrap 5, Dashboard 스타일
+##### 진행중 프로젝트 카드
+- **표시 내용**: 현재 진행중인 프로젝트 개수
+- **추가 정보**: 전체 프로젝트 중 진행중인 프로젝트의 비율을 퍼센트로 표시
+- **버튼**: "필터 보기" 버튼
+- **버튼 기능**: 클릭하면 진행중 상태로 필터링된 프로젝트 목록 페이지(`PAGE-PROJECT-001`)로 이동
 
----
+##### 완료된 프로젝트 카드
+- **표시 내용**: 완료된 프로젝트 개수
+- **추가 정보**: 전체 프로젝트 중 완료된 프로젝트의 완료율을 퍼센트로 표시
+- **버튼**: "완료 목록" 버튼
+- **버튼 기능**: 클릭하면 완료 상태로 필터링된 프로젝트 목록 페이지(`PAGE-PROJECT-001`)로 이동
 
-## layout/base.html (Fragment)
-> 공통 레이아웃 템플릿
+##### 이번 주 마감 태스크 카드 (향후 구현)
+- **표시 내용**: 이번 주 내 마감되는 태스크 개수
+- **추가 정보**: "3일 이내 마감" 등의 상세 정보
+- **버튼**: "구현 예정" (현재 비활성화)
 
-### Fragment Definitions
+#### 2-2. 최근 프로젝트 섹션
 
-#### head Fragment
-```html
-<head th:fragment="head">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} + ' - Liam Gantt'">Liam Gantt</title>
-    <!-- Bootstrap CSS -->
-    <!-- Font Awesome -->
-    <!-- Custom CSS -->
-</head>
-```
+##### 섹션 헤더
+- **제목**: "최근 프로젝트"
+- **메뉴 버튼**: 오른쪽 상단의 점 3개 메뉴
+  - "전체 목록": 프로젝트 목록 페이지(`PAGE-PROJECT-001`)로 이동
+  - "새 프로젝트": 새 프로젝트 생성 페이지(`PAGE-PROJECT-002`)로 이동
 
-#### nav Fragment
-```html
-<nav th:fragment="nav">
-    <!-- 네비게이션 바 -->
-</nav>
-```
+##### 프로젝트가 없는 경우 표시
+- **표시 조건**: 등록된 프로젝트가 하나도 없을 때
+- **표시 내용**:
+  - 빈 폴더 아이콘
+  - "등록된 프로젝트가 없습니다" 메시지
+  - "첫 번째 프로젝트를 생성하여 시작하세요." 안내 텍스트
+- **버튼**: "새 프로젝트 만들기"
+- **버튼 기능**: 새 프로젝트 생성 페이지(`PAGE-PROJECT-002`)로 이동
 
-#### footer Fragment
-```html
-<footer th:fragment="footer">
-    <!-- 푸터 -->
-</footer>
-```
+##### 프로젝트가 있는 경우 표시
+- **표시 방식**: 최대 5개의 프로젝트를 카드 형태로 표시
+- **카드 배치**: 화면 크기에 따라 가로로 2-3개씩 배치
 
-#### scripts Fragment
-```html
-<div th:fragment="scripts">
-    <!-- jQuery -->
-    <!-- Bootstrap JS -->
-    <!-- Custom JS -->
-</div>
-```
+###### 각 프로젝트 카드 구성
+- **프로젝트명**: 파란색으로 강조 표시
+- **상태 배지**:
+  - 계획중: 회색
+  - 진행중: 초록색
+  - 완료: 파란색
+  - 보류: 노란색
+  - 취소: 빨간색
+- **프로젝트 설명**: 작은 글씨로 표시 (없으면 "설명 없음")
+- **진행률 바**:
+  - 진행률에 따른 색상 변화 (30% 미만=빨강, 70% 미만=노랑, 70% 이상=초록)
+  - 진행률 퍼센트 숫자 표시
+- **일정 정보**: 시작일과 종료일을 MM/DD 형식으로 표시
+- **액션 버튼들** (카드 하단):
+  - "상세" 버튼: 해당 프로젝트 상세 페이지(`PAGE-PROJECT-003`)로 이동
+  - "간트" 버튼: 해당 프로젝트의 간트차트 페이지(`PAGE-GANTT-001`)로 이동
+  - "수정" 버튼: 해당 프로젝트 수정 페이지(`PAGE-PROJECT-002`)로 이동
 
-### Required Variables (From Including Page)
-| Variable | Type | Required | Description |
-|----------|------|----------|-------------|
-| pageTitle | `String` | Yes | 페이지 제목 |
-| pageIcon | `String` | No | 페이지 아이콘 |
-| activePage | `String` | No | 활성 메뉴 |
+##### 더 보기 버튼
+- **표시 조건**: 프로젝트가 하나라도 있을 때
+- **버튼 텍스트**: "모든 프로젝트 보기"
+- **버튼 기능**: 전체 프로젝트 목록 페이지로 이동
 
-### Navigation Structure
-```
-Liam Gantt (로고/홈)
-├── 대시보드 (/)
-├── 프로젝트 (/web/projects)
-│   ├── 목록
-│   └── 새 프로젝트
-├── 태스크 (/web/tasks) - 향후
-├── 캘린더 (/web/calendar) - 향후
-└── 설정 (/web/settings) - 향후
-```
+#### 2-3. 빠른 작업 섹션
+사용자가 자주 사용하는 기능들을 큰 버튼으로 제공합니다.
 
-### User Info Section (향후)
-- 사용자 이름
-- 프로필 이미지
-- 로그아웃 링크
+##### 4개의 큰 버튼 배치
+- **새 프로젝트**: 새 프로젝트 생성 페이지로 이동 (활성화)
+- **프로젝트 목록**: 전체 프로젝트 목록 페이지로 이동 (활성화)
+- **내 태스크**: 내가 담당한 태스크 목록 페이지로 이동 (구현 예정, 현재 비활성화)
+- **캘린더 뷰**: 프로젝트 일정을 캘린더 형태로 보는 페이지로 이동 (구현 예정, 현재 비활성화)
 
----
+#### 2-4. 시스템 정보 섹션
+현재 시스템의 상태와 정보를 표 형태로 제공합니다.
 
-## error.html
-> 에러 페이지
+##### 좌측 열 정보
+- **애플리케이션**: "Liam Gantt v1.0.0"
+- **데이터베이스**: "H2 Database (개발 환경)"
+- **백엔드**: "Spring Boot 3.5.5"
+- **프론트엔드**: "Bootstrap 5 + Thymeleaf"
 
-### Controller Mapping
-- **URL**: `/error`
-- **Method**: Any
-- **Controller**: Spring Boot Default Error Handler
-- **Description**: 에러 발생 시 표시되는 페이지
+##### 우측 열 정보
+- **서버 시간**: 현재 서버 시간을 실시간으로 표시
+- **업타임**: 서버 가동 시간 (구현 예정)
+- **메모리 사용량**: 시스템 메모리 사용률 (구현 예정)
+- **API 버전**: "v1"
 
-### Required Model Attributes
+### 3. 푸터 영역 (하단)
 
-| Attribute Name | Type | Required | Default | Description |
-|---------------|------|----------|---------|-------------|
-| status | `Integer` | Yes | - | HTTP 상태 코드 |
-| error | `String` | Yes | - | 에러 타입 |
-| message | `String` | No | - | 에러 메시지 |
-| timestamp | `Date` | Yes | - | 발생 시간 |
-| path | `String` | Yes | - | 요청 경로 |
+#### 3-1. 회사 정보 섹션
+- **제목**: "Liam Gantt Chart"
+- **설명**: "프로젝트 관리 및 일정 시각화 도구"
+- **기술 정보**: "Built with Spring Boot & Bootstrap"
 
-### Error Types
-- **404**: 페이지를 찾을 수 없습니다
-- **403**: 접근 권한이 없습니다
-- **500**: 서버 오류가 발생했습니다
-- **400**: 잘못된 요청입니다
+#### 3-2. 빠른 링크 섹션
+- **대시보드**: 홈 페이지로 이동
+- **프로젝트**: 프로젝트 목록 페이지로 이동
+- **API 문서**: API 문서 페이지로 이동 (향후 구현 예정)
+- **도움말**: 사용자 가이드 페이지로 이동 (향후 구현 예정)
 
-### Page Elements
-- **에러 코드 표시**: 큰 숫자로 상태 코드
-- **에러 메시지**: 사용자 친화적 설명
-- **홈으로 버튼**: `@{/}`
-- **이전 페이지**: JavaScript `history.back()`
+#### 3-3. 시스템 정보 섹션
+- **Version**: v1.0.0
+- **Database**: H2 (개발)
+- **Updated**: 현재 날짜 표시
+
+#### 3-4. 저작권 정보
+- **텍스트**: "© 2024 Liam Gantt Chart. All rights reserved."
 
 ---
 
-## fragments/alerts.html (Fragment)
-> 알림 메시지 컴포넌트
+## 에러 페이지
+> 오류가 발생했을 때 사용자에게 보여지는 화면
 
-### Fragment Definition
-```html
-<div th:fragment="alerts">
-    <!-- Success Message -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
-        <i class="fas fa-check-circle me-2"></i>
-        <span th:text="${successMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+### 화면 구성
+시스템에서 오류가 발생했을 때 사용자에게 친화적인 오류 메시지를 제공하는 페이지입니다.
 
-    <!-- Error Message -->
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        <span th:text="${errorMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+### 표시 내용
+- **에러 코드**: HTTP 상태 코드를 큰 숫자로 표시 (예: 404, 500)
+- **에러 메시지**: 사용자가 이해하기 쉬운 오류 설명
+  - 404: "페이지를 찾을 수 없습니다"
+  - 403: "접근 권한이 없습니다"
+  - 500: "서버 오류가 발생했습니다"
+  - 400: "잘못된 요청입니다"
 
-    <!-- Warning Message -->
-    <div th:if="${warningMessage}" class="alert alert-warning alert-dismissible fade show">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        <span th:text="${warningMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-
-    <!-- Info Message -->
-    <div th:if="${infoMessage}" class="alert alert-info alert-dismissible fade show">
-        <i class="fas fa-info-circle me-2"></i>
-        <span th:text="${infoMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-</div>
-```
-
-### Usage
-```html
-<div th:replace="fragments/alerts :: alerts"></div>
-```
+### 액션 버튼
+- **홈으로 버튼**: 홈 페이지(`PAGE-HOME-001`)로 이동
+- **이전 페이지**: 브라우저의 뒤로가기 기능 실행
 
 ---
 
-## fragments/pagination.html (Fragment)
-> 페이지네이션 컴포넌트
+## 공통 알림 메시지 {#PAGE-COMMON-002}
+> 모든 페이지에서 사용되는 알림 표시 방식
 
-### Fragment Definition
-```html
-<nav th:fragment="pagination(page, baseUrl)">
-    <ul class="pagination justify-content-center">
-        <!-- Previous -->
-        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
-            <a class="page-link" th:href="@{${baseUrl}(page=${page.number - 1}, size=${page.size})}">
-                이전
-            </a>
-        </li>
+### 알림 유형
+- **성공 메시지**: 초록색 배경, 체크 아이콘, 작업 완료 시 표시
+- **오류 메시지**: 빨간색 배경, 경고 아이콘, 오류 발생 시 표시
+- **경고 메시지**: 노란색 배경, 삼각형 아이콘, 주의사항 안내 시 표시
+- **정보 메시지**: 파란색 배경, 정보 아이콘, 일반적인 안내 시 표시
 
-        <!-- Page Numbers -->
-        <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
-            th:classappend="${i == page.number} ? 'active'">
-            <a class="page-link" th:href="@{${baseUrl}(page=${i}, size=${page.size})}" th:text="${i + 1}">
-            </a>
-        </li>
-
-        <!-- Next -->
-        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
-            <a class="page-link" th:href="@{${baseUrl}(page=${page.number + 1}, size=${page.size})}">
-                다음
-            </a>
-        </li>
-    </ul>
-</nav>
-```
-
-### Parameters
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| page | `Page<?>` | 페이지 객체 |
-| baseUrl | `String` | 기본 URL 경로 |
+### 알림 동작
+- **자동 사라짐**: 일정 시간 후 자동으로 사라짐
+- **수동 닫기**: 사용자가 X 버튼을 클릭하여 수동으로 닫을 수 있음
 
 ---
 
-## 🎨 공통 스타일 가이드
+## 공통 페이지네이션 {#PAGE-COMMON-003}
+> 목록이 여러 페이지로 나뉠 때 사용되는 페이지 이동 기능
 
-### 색상 변수
-```css
-:root {
-    --primary: #007bff;
-    --success: #28a745;
-    --danger: #dc3545;
-    --warning: #ffc107;
-    --info: #17a2b8;
-    --dark: #343a40;
-    --light: #f8f9fa;
-}
-```
+### 구성 요소
+- **이전 페이지 버튼**: 이전 페이지로 이동 (첫 페이지에서는 비활성화)
+- **페이지 번호**: 클릭 가능한 페이지 번호들 (현재 페이지는 강조 표시)
+- **다음 페이지 버튼**: 다음 페이지로 이동 (마지막 페이지에서는 비활성화)
 
-### 레이아웃 구조
-```css
-.main-wrapper {
-    display: flex;
-    min-height: 100vh;
-}
+### 페이지 번호 표시 규칙
+- 현재 페이지 앞뒤로 2개씩 총 5개 페이지 번호 표시
+- 페이지가 많을 경우 첫 페이지(1)와 마지막 페이지는 항상 표시
+- 중간 생략 시 "..." 표시
 
-.sidebar {
-    width: 250px;
-    background: var(--dark);
-}
+### 페이지 정보
+- 현재 표시 범위와 전체 항목 수 표시 (예: "1-10 / 총 100개")
+- 현재 페이지 번호와 전체 페이지 수 표시 (예: "페이지 1 / 10")
 
-.content {
-    flex: 1;
-    padding: 20px;
-}
-```
+---
 
-### 반응형 브레이크포인트
-- **xs**: < 576px (모바일)
-- **sm**: ≥ 576px (태블릿)
-- **md**: ≥ 768px (태블릿 가로)
-- **lg**: ≥ 992px (데스크톱)
-- **xl**: ≥ 1200px (대형 데스크톱)
+## 반응형 디자인 고려사항
 
-## 🔍 공통 JavaScript 유틸리티
+### 데스크톱 (1200px 이상)
+- 모든 요소가 가로로 배치
+- 통계 카드 4개가 한 줄에 표시
+- 최근 프로젝트는 한 줄에 3개씩 표시
 
-### AJAX 헬퍼
-```javascript
-// CSRF 토큰 포함 AJAX 요청
-function ajaxRequest(url, method, data) {
-    return $.ajax({
-        url: url,
-        method: method,
-        data: JSON.stringify(data),
-        contentType: 'application/json',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-}
-```
+### 태블릿 (768px - 1199px)
+- 통계 카드는 2개씩 2줄로 배치
+- 최근 프로젝트는 한 줄에 2개씩 표시
+- 네비게이션 메뉴는 축약되어 표시
 
-### 날짜 포맷터
-```javascript
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('ko-KR');
-}
-```
-
-### 알림 표시
-```javascript
-function showAlert(message, type = 'success') {
-    const alertHtml = `
-        <div class="alert alert-${type} alert-dismissible fade show">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    $('#alert-container').html(alertHtml);
-}
-```
-
-## 🔗 Related Files
-- `HomeController` - `/src/main/java/com/liam/gantt/controller/HomeController.java`
-- Base Layout - `/src/main/resources/templates/layout/base.html`
-- Home Template - `/src/main/resources/templates/home.html`
-- Error Template - `/src/main/resources/templates/error.html`
+### 모바일 (767px 이하)
+- 통계 카드는 세로로 1개씩 배치
+- 최근 프로젝트도 세로로 1개씩 배치
+- 네비게이션은 햄버거 메뉴로 변경
+- 테이블은 가로 스크롤 가능하도록 처리
