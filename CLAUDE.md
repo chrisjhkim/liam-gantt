@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 Liam Gantt Chart Application - Claude Code 개발 가이드
 
 > **✅ 프로젝트 상태**: 백엔드 + REST API 컨트롤러 완료 (모든 테스트 통과)
