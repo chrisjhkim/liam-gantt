@@ -155,10 +155,10 @@ public class ProjectWebController {
     @GetMapping("/{id}/edit")
     public String editProjectForm(@PathVariable Long id, Model model) {
         log.info("프로젝트 수정 폼 요청 - id: {}", id);
-        
+
         try {
             ProjectResponseDto project = projectService.findById(id);
-            
+
             // ResponseDto를 RequestDto로 변환
             ProjectRequestDto projectRequest = ProjectRequestDto.builder()
                     .name(project.getName())
@@ -167,12 +167,13 @@ public class ProjectWebController {
                     .endDate(project.getEndDate())
                     .status(project.getStatus())
                     .build();
-            
+
             model.addAttribute("project", projectRequest);
+            model.addAttribute("projectInfo", project);  // 추가: 프로젝트 정보 표시용
             model.addAttribute("projectId", id);
             model.addAttribute("pageTitle", "프로젝트 수정: " + project.getName());
             model.addAttribute("pageIcon", "fas fa-edit");
-            
+
             return "projects/form";
         } catch (Exception e) {
             log.error("프로젝트 조회 실패 - id: {}", id, e);

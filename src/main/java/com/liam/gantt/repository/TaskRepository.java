@@ -73,11 +73,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     
     /**
      * 태스크와 의존성 관계를 함께 조회 (N+1 문제 방지)
+     * 수정: MultipleBagFetchException 방지를 위해 단순 조회로 변경
      */
-    @Query("SELECT DISTINCT t FROM Task t " +
-           "LEFT JOIN FETCH t.predecessorDependencies " +
-           "LEFT JOIN FETCH t.successorDependencies " +
-           "WHERE t.id = :id")
+    @Query("SELECT t FROM Task t WHERE t.id = :id")
     Optional<Task> findByIdWithDependencies(@Param("id") Long id);
     
     /**

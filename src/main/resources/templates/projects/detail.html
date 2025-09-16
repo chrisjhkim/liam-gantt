@@ -192,7 +192,7 @@
                     </div>
                     <div class="card-body">
                         <!-- Recent Tasks -->
-                        <div th:if="${tasks != null and tasks.hasContent()}" style="display: none;"><!-- SSR에서만 표시 -->
+                        <div th:if="${tasks != null and tasks.hasContent()}">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead class="table-light">
@@ -275,103 +275,9 @@
                             </div>
                         </div>
 
-                        <!-- 정적 프로토타입용 샘플 태스크 -->
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>태스크명</th>
-                                        <th>상태</th>
-                                        <th>진행률</th>
-                                        <th>기간</th>
-                                        <th>작업</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-start">
-                                                <div>
-                                                    <a href="#" class="fw-bold text-decoration-none">요구사항 분석</a>
-                                                    <div class="small text-muted">사용자 요구사항 수집 및 분석</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge bg-success">완료</span></td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="progress me-2" style="width: 50px; height: 6px;">
-                                                    <div class="progress-bar bg-success" style="width: 100%"></div>
-                                                </div>
-                                                <span class="small">100%</span>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge bg-light text-dark">5일</span></td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="#" class="btn btn-outline-info btn-sm"><i class="fas fa-eye"></i></a>
-                                                <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-start">
-                                                <div>
-                                                    <a href="#" class="fw-bold text-decoration-none">UI 디자인</a>
-                                                    <div class="small text-muted">메인 페이지 및 제품 리스트 디자인</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge bg-primary">진행 중</span></td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="progress me-2" style="width: 50px; height: 6px;">
-                                                    <div class="progress-bar bg-warning" style="width: 70%"></div>
-                                                </div>
-                                                <span class="small">70%</span>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge bg-light text-dark">10일</span></td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="#" class="btn btn-outline-info btn-sm"><i class="fas fa-eye"></i></a>
-                                                <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-start">
-                                                <div>
-                                                    <a href="#" class="fw-bold text-decoration-none">프론트엔드 개발</a>
-                                                    <div class="small text-muted">React 기반 사용자 인터페이스 개발</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge bg-secondary">시작 전</span></td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="progress me-2" style="width: 50px; height: 6px;">
-                                                    <div class="progress-bar bg-danger" style="width: 0%"></div>
-                                                </div>
-                                                <span class="small">0%</span>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge bg-light text-dark">20일</span></td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="#" class="btn btn-outline-info btn-sm"><i class="fas fa-eye"></i></a>
-                                                <a href="#" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
 
                         <!-- Empty State -->
-                        <div th:unless="${tasks != null and tasks.hasContent()}" class="text-center py-4" style="display: none;"><!-- SSR에서만 표시 -->
+                        <div th:unless="${tasks != null and tasks.hasContent()}" class="text-center py-4">
                             <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">등록된 태스크가 없습니다</h6>
                             <p class="text-muted mb-3">프로젝트의 첫 번째 태스크를 추가해보세요.</p>

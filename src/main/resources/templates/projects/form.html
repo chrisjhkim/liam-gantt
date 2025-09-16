@@ -39,9 +39,9 @@
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-body">
-                        <form th:action="${projectId != null ? '/web/projects/' + projectId : '/web/projects'}" 
-                              th:method="${projectId != null ? 'put' : 'post'}" 
-                              th:object="${project}" 
+                        <form th:action="${projectId != null ? '/web/projects/' + projectId : '/web/projects'}"
+                              th:method="post"
+                              th:object="${project}"
                               novalidate>
                             
                             <!-- Project Name -->
@@ -136,28 +136,28 @@
                         <h6 class="card-title">프로젝트 정보</h6>
                         <dl class="row">
                             <dt class="col-sm-3">생성일:</dt>
-                            <dd class="col-sm-9" th:text="${#temporals.format(project.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+                            <dd class="col-sm-9" th:text="${#temporals.format(projectInfo.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
                             
                             <dt class="col-sm-3">수정일:</dt>
-                            <dd class="col-sm-9" th:text="${#temporals.format(project.updatedAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+                            <dd class="col-sm-9" th:text="${#temporals.format(projectInfo.updatedAt, 'yyyy-MM-dd HH:mm:ss')}"></dd>
                             
-                            <dt class="col-sm-3" th:if="${project.taskCount != null}">태스크 수:</dt>
-                            <dd class="col-sm-9" th:if="${project.taskCount != null}">
-                                <span class="badge bg-secondary" th:text="${project.taskCount}"></span>
+                            <dt class="col-sm-3" th:if="${projectInfo != null && projectInfo.taskCount != null}">태스크 수:</dt>
+                            <dd class="col-sm-9" th:if="${projectInfo != null && projectInfo.taskCount != null}">
+                                <span class="badge bg-secondary" th:text="${projectInfo.taskCount}"></span>
                             </dd>
                             
-                            <dt class="col-sm-3" th:if="${project.averageProgress != null}">평균 진행률:</dt>
-                            <dd class="col-sm-9" th:if="${project.averageProgress != null}">
+                            <dt class="col-sm-3" th:if="${projectInfo != null && projectInfo.averageProgress != null}">평균 진행률:</dt>
+                            <dd class="col-sm-9" th:if="${projectInfo != null && projectInfo.averageProgress != null}">
                                 <div class="d-flex align-items-center">
                                     <div class="progress me-2" style="width: 150px;">
-                                        <div class="progress-bar" 
-                                             th:style="'width: ' + ${project.averageProgress} + '%'"
-                                             th:classappend="${project.averageProgress >= 100 ? 'bg-success' :
-                                                             project.averageProgress >= 75 ? 'bg-info' :
-                                                             project.averageProgress >= 50 ? 'bg-warning' : 'bg-danger'}">
+                                        <div class="progress-bar"
+                                             th:style="'width: ' + ${projectInfo.averageProgress} + '%'"
+                                             th:classappend="${projectInfo.averageProgress >= 100 ? 'bg-success' :
+                                                             projectInfo.averageProgress >= 75 ? 'bg-info' :
+                                                             projectInfo.averageProgress >= 50 ? 'bg-warning' : 'bg-danger'}">
                                         </div>
                                     </div>
-                                    <span th:text="${#numbers.formatDecimal(project.averageProgress, 1, 1)} + '%'"></span>
+                                    <span th:text="${#numbers.formatDecimal(projectInfo.averageProgress, 1, 1)} + '%'"></span>
                                 </div>
                             </dd>
                         </dl>
