@@ -1,0 +1,14 @@
+# Gradle Properties Template
+# Copy this file to gradle.properties and adjust the path to your JDK 21 installation
+
+# Example for Windows (IntelliJ IDEA default location):
+# org.gradle.java.home=C:\\Users\\YOUR_USERNAME\\.jdks\\corretto-21.0.2
+
+# Example for macOS:
+# org.gradle.java.home=/Users/YOUR_USERNAME/Library/Java/JavaVirtualMachines/corretto-21.0.2/Contents/Home
+
+# Example for Linux:
+# org.gradle.java.home=/home/YOUR_USERNAME/.jdks/corretto-21.0.2
+
+# Uncomment and modify the appropriate line for your system:
+# org.gradle.java.home=YOUR_JDK_21_PATH
