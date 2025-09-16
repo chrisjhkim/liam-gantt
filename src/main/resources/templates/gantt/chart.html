@@ -290,47 +290,37 @@
                     
                     <!-- Gantt Body -->
                     <div class="gantt-body" id="ganttBody">
-                        <!-- 정적 프로토타입용 샘플 간트 바 -->
-                        <div class="gantt-row">
-                            <div class="task-label">
-                                <div style="font-weight: 600;">요구사항 분석</div>
-                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
-                                    2024-01-15 ~ 2024-01-20 (5일)
+                        <!-- 실제 태스크 데이터 -->
+                        <div th:if="${tasks != null and !tasks.isEmpty()}">
+                            <div th:each="task : ${tasks}" class="gantt-row">
+                                <div class="task-label">
+                                    <div style="font-weight: 600;" th:text="${task.name}">태스크명</div>
+                                    <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
+                                        <span th:text="${#temporals.format(task.startDate, 'yyyy-MM-dd')}">시작일</span> ~
+                                        <span th:text="${#temporals.format(task.endDate, 'yyyy-MM-dd')}">종료일</span>
+                                        (<span th:text="${task.duration}">기간</span>일)
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="task-timeline">
-                                <div class="gantt-task completed" style="left: 5%; width: 15%;">
-                                    <span>요구사항 분석</span>
-                                    <span class="task-progress">100%</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gantt-row">
-                            <div class="task-label">
-                                <div style="font-weight: 600;">UI 디자인</div>
-                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
-                                    2024-01-22 ~ 2024-02-02 (10일)
-                                </div>
-                            </div>
-                            <div class="task-timeline">
-                                <div class="gantt-task in-progress" style="left: 20%; width: 25%; --progress: 70%;">
-                                    <span>UI 디자인</span>
-                                    <span class="task-progress">70%</span>
+                                <div class="task-timeline">
+                                    <div class="gantt-task"
+                                         th:classappend="${task.status.name() == 'COMPLETED' ? 'completed' :
+                                                        task.status.name() == 'IN_PROGRESS' ? 'in-progress' : 'not-started'}"
+                                         style="left: 5%; width: 25%;">
+                                        <span th:text="${task.name}">태스크명</span>
+                                        <span class="task-progress" th:text="${#numbers.formatDecimal(task.progress, 1, 0)} + '%'">진행률</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="gantt-row">
-                            <div class="task-label">
-                                <div style="font-weight: 600;">프론트엔드 개발</div>
-                                <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
-                                    2024-02-05 ~ 2024-03-01 (20일)
-                                </div>
-                            </div>
-                            <div class="task-timeline">
-                                <div class="gantt-task not-started" style="left: 45%; width: 40%;">
-                                    <span>프론트엔드 개발</span>
-                                </div>
-                            </div>
+
+                        <!-- 태스크가 없는 경우 -->
+                        <div th:if="${tasks == null or tasks.isEmpty()}" class="text-center py-5">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">태스크가 없습니다</h5>
+                            <p class="text-muted">이 프로젝트에 태스크를 추가해보세요.</p>
+                            <a th:href="@{/web/projects/{id}(id=${project.id})}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>태스크 추가하기
+                            </a>
                         </div>
                     </div>
                 </div>

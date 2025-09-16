@@ -5,6 +5,7 @@ import com.liam.gantt.dto.response.ProjectResponseDto;
 import com.liam.gantt.dto.response.TaskResponseDto;
 import com.liam.gantt.service.GanttService;
 import com.liam.gantt.service.ProjectService;
+import com.liam.gantt.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,7 @@ public class GanttWebController {
 
     private final GanttService ganttService;
     private final ProjectService projectService;
+    private final TaskService taskService;
 
     /**
      * 간트차트 목록 페이지 (프로젝트 선택)
@@ -67,17 +69,19 @@ public class GanttWebController {
         
         try {
             ProjectResponseDto project = projectService.findById(projectId);
-            
+            List<TaskResponseDto> tasks = taskService.findByProjectId(projectId);
+
             model.addAttribute("project", project);
+            model.addAttribute("tasks", tasks);
             model.addAttribute("pageTitle", "간트차트: " + project.getName());
             model.addAttribute("pageIcon", "fas fa-chart-gantt");
-            
+
             return "gantt/chart";
             
         } catch (Exception e) {
             log.error("간트차트 페이지 로드 실패: {}", e.getMessage(), e);
             model.addAttribute("errorMessage", "간트차트를 불러올 수 없습니다: " + e.getMessage());
-            return "error/404";
+            return "redirect:/web/projects?error=" + e.getMessage();
         }
     }
 
