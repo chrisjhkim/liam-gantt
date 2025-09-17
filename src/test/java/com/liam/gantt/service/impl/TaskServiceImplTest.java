@@ -147,7 +147,7 @@ class TaskServiceImplTest {
                 .predecessor(parentTask)
                 .successor(testTask)
                 .dependencyType(DependencyType.FINISH_TO_START)
-                .lagTime(0)
+                .lagDays(0)
                 .build();
     }
 

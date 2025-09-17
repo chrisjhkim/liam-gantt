@@ -65,10 +65,10 @@ class TaskWebControllerTest {
         dependencies = Arrays.asList(
                 TaskDependencyResponseDto.builder()
                         .id(1L)
-                        .predecessorTaskId(2L)
-                        .successorTaskId(1L)
+                        .predecessorId(2L)
+                        .successorId(1L)
                         .dependencyType(DependencyType.FINISH_TO_START)
-                        .lagTime(0)
+                        .lagDays(0)
                         .build()
         );
 

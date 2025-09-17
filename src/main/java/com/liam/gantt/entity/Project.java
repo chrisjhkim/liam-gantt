@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @ToString(exclude = {"tasks"})
 @EqualsAndHashCode(callSuper = true, exclude = {"tasks"})
 public class Project extends BaseEntity {

@@ -20,11 +20,31 @@ public interface GanttService {
      * 태스크 의존성 추가
      */
     TaskDependencyResponseDto addDependency(TaskDependencyRequestDto requestDto);
-    
+
+    /**
+     * 태스크 의존성 추가 (테스트 호환성)
+     */
+    TaskDependencyResponseDto addTaskDependency(TaskDependencyRequestDto requestDto);
+
     /**
      * 태스크 의존성 제거
      */
     void removeDependency(Long dependencyId);
+
+    /**
+     * 태스크 의존성 제거 (테스트 호환성)
+     */
+    void removeTaskDependency(Long dependencyId);
+
+    /**
+     * 태스크 의존성 업데이트
+     */
+    TaskDependencyResponseDto updateTaskDependency(Long dependencyId, TaskDependencyRequestDto requestDto);
+
+    /**
+     * 프로젝트 통계 계산
+     */
+    GanttChartDto.Statistics calculateStatistics(Long projectId);
     
     /**
      * 태스크의 모든 의존성 조회

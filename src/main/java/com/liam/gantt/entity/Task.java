@@ -4,6 +4,7 @@ import com.liam.gantt.entity.enums.TaskStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,7 +39,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @ToString(exclude = {"project", "parentTask", "subTasks", "predecessorDependencies", "successorDependencies"})
 @EqualsAndHashCode(callSuper = true, exclude = {"project", "parentTask", "subTasks", "predecessorDependencies", "successorDependencies"})
 public class Task extends BaseEntity {

@@ -197,7 +197,74 @@ public class GanttServiceImpl implements GanttService {
         
         log.info("프로젝트 일정 재계산 완료: projectId={}", projectId);
     }
-    
+
+    @Override
+    public TaskDependencyResponseDto addTaskDependency(TaskDependencyRequestDto requestDto) {
+        return addDependency(requestDto);
+    }
+
+    @Override
+    public void removeTaskDependency(Long dependencyId) {
+        removeDependency(dependencyId);
+    }
+
+    @Override
+    @Transactional
+    public TaskDependencyResponseDto updateTaskDependency(Long dependencyId, TaskDependencyRequestDto requestDto) {
+        log.info("태스크 의존성 업데이트: id={}", dependencyId);
+
+        TaskDependency dependency = dependencyRepository.findById(dependencyId)
+                .orElseThrow(() -> new InvalidRequestException("태스크 의존성을 찾을 수 없습니다: " + dependencyId));
+
+        // 유효성 검증
+        if (requestDto.isSelfReference()) {
+            throw new InvalidRequestException("태스크는 자기 자신에 의존할 수 없습니다");
+        }
+
+        // 순환 의존성 체크
+        if (hasCircularDependency(requestDto.getPredecessorId(), requestDto.getSuccessorId())) {
+            throw new InvalidRequestException("순환 의존성이 감지되었습니다");
+        }
+
+        // 태스크 조회
+        Task predecessor = taskRepository.findById(requestDto.getPredecessorId())
+                .orElseThrow(() -> new TaskNotFoundException("선행 태스크를 찾을 수 없습니다: " + requestDto.getPredecessorId()));
+        Task successor = taskRepository.findById(requestDto.getSuccessorId())
+                .orElseThrow(() -> new TaskNotFoundException("후행 태스크를 찾을 수 없습니다: " + requestDto.getSuccessorId()));
+
+        // 의존성 업데이트
+        dependency.setPredecessor(predecessor);
+        dependency.setSuccessor(successor);
+        dependency.setDependencyType(requestDto.getDependencyType());
+        dependency.setLagDays(requestDto.getLagDays());
+
+        log.info("태스크 의존성 업데이트 완료: id={}", dependencyId);
+        return convertToDto(dependency);
+    }
+
+    @Override
+    public GanttChartDto.Statistics calculateStatistics(Long projectId) {
+        log.debug("프로젝트 통계 계산: projectId={}", projectId);
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + projectId));
+
+        List<Task> tasks = taskRepository.findByProjectId(projectId);
+
+        // 통계 계산
+        int totalTasks = tasks.size();
+        int completedTasks = (int) tasks.stream().filter(Task::isCompleted).count();
+        int overdueTasks = (int) tasks.stream().filter(Task::isOverdue).count();
+
+        return GanttChartDto.Statistics.builder()
+                .totalTasks(totalTasks)
+                .completedTasks(completedTasks)
+                .inProgressTasks(totalTasks - completedTasks)
+                .overdueTasks(overdueTasks)
+                .completionRate(totalTasks > 0 ? (double) completedTasks / totalTasks * 100 : 0.0)
+                .build();
+    }
+
     /**
      * Entity를 DTO로 변환
      */

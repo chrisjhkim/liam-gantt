@@ -56,4 +56,20 @@ public class GanttChartDto {
                     .build();
         }
     }
+
+    /**
+     * 프로젝트 통계 정보 내부 클래스
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class Statistics {
+        private int totalTasks;
+        private int completedTasks;
+        private int inProgressTasks;
+        private int overdueTasks;
+        private double completionRate;
+    }
 }

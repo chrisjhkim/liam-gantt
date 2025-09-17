@@ -365,7 +365,7 @@ class ProjectServiceImplTest {
         ProjectResponseDto responseWithProgress = ProjectResponseDto.builder()
                 .id(1L)
                 .name("테스트 프로젝트")
-                .averageProgress(BigDecimal.valueOf(75)) // (100 + 50) / 2
+                .averageProgress(75.0) // (100 + 50) / 2
                 .build();
 
         given(projectRepository.findById(1L)).willReturn(Optional.of(testProject));

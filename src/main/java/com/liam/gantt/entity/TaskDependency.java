@@ -4,6 +4,7 @@ import com.liam.gantt.entity.enums.DependencyType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 태스크 간 의존성 관계 엔티티
@@ -20,7 +21,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @ToString(exclude = {"predecessor", "successor"})
 @EqualsAndHashCode(callSuper = true, exclude = {"predecessor", "successor"})
 public class TaskDependency extends BaseEntity {
