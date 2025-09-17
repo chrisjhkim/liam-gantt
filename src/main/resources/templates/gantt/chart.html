@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- D3.js for advanced visualization -->
+    <script src="https://unpkg.com/d3@7/dist/d3.min.js"></script>
     <style>
         .gantt-container {
             overflow-x: auto;
@@ -114,7 +116,8 @@
         }
         
         .gantt-task.in-progress {
-            background: linear-gradient(90deg, #28a745 0%, #28a745 var(--progress, 0%), #0d6efd var(--progress, 0%), #0d6efd 100%);
+            background: linear-gradient(90deg, #28a745 0%, #28a745 var(--progress, 0%), #17a2b8 var(--progress, 0%), #17a2b8 100%);
+            border: 1px solid #20c997;
         }
         
         .gantt-task.completed {
@@ -171,6 +174,183 @@
             height: 16px;
             border-radius: 4px;
         }
+
+        /* D3.js Enhanced Gantt Chart Styles */
+        .d3-gantt-container {
+            width: 100%;
+            height: auto;
+            min-height: 400px;
+        }
+
+        .d3-timeline-axis {
+            font-size: 12px;
+        }
+
+        .d3-task-bar {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .d3-task-bar:hover {
+            stroke: #333;
+            stroke-width: 2px;
+            filter: brightness(1.1);
+        }
+
+        .d3-task-text {
+            font-size: 11px;
+            fill: white;
+            pointer-events: none;
+        }
+
+        .d3-task-progress {
+            opacity: 0.7;
+        }
+
+        .d3-grid-line {
+            stroke: #e0e0e0;
+            stroke-width: 1px;
+            stroke-dasharray: 2,2;
+        }
+
+        .d3-today-line {
+            stroke: #ff4444;
+            stroke-width: 2px;
+            stroke-dasharray: 5,5;
+        }
+
+        .d3-dependency-line {
+            stroke: #666;
+            stroke-width: 2px;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+
+        .d3-milestone {
+            fill: #ffd700;
+            stroke: #ffcc00;
+            stroke-width: 2px;
+        }
+
+        /* 반응형 디자인 개선 */
+        @media (max-width: 768px) {
+            .gantt-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .task-label {
+                width: 180px;
+                font-size: 0.8rem;
+            }
+
+            .gantt-timeline {
+                min-width: 600px;
+            }
+
+            .timeline-week {
+                font-size: 0.75rem;
+                padding: 0.3rem;
+            }
+
+            .gantt-task {
+                font-size: 0.7rem;
+                height: 20px;
+            }
+
+            .stats-card .h4 {
+                font-size: 1.2rem;
+            }
+
+            .stats-card .small {
+                font-size: 0.75rem;
+            }
+
+            /* 모바일에서는 필터 패널을 세로로 배치 */
+            #filterPanel .row > div {
+                margin-bottom: 0.5rem;
+            }
+
+            /* 컨트롤 패널 모바일 최적화 */
+            .card-header .d-flex {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .btn-group {
+                width: 100%;
+            }
+
+            .btn-group .btn {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .task-label {
+                width: 150px;
+                font-size: 0.75rem;
+            }
+
+            .gantt-task {
+                font-size: 0.65rem;
+                height: 18px;
+                min-width: 15px;
+            }
+
+            .stats-card .col-md-3 {
+                margin-bottom: 1rem;
+            }
+
+            /* 모바일에서는 D3 차트 크기 조정 */
+            .d3-gantt-container {
+                min-height: 300px;
+            }
+
+            /* 모달 크기 조정 */
+            .modal-lg {
+                max-width: 95%;
+            }
+        }
+
+        /* 터치 디바이스 최적화 */
+        @media (hover: none) and (pointer: coarse) {
+            .gantt-task {
+                min-height: 32px;
+                touch-action: manipulation;
+            }
+
+            .btn {
+                min-height: 44px;
+            }
+
+            .form-control, .form-select {
+                min-height: 44px;
+            }
+        }
+
+        /* 다크모드 지원 */
+        @media (prefers-color-scheme: dark) {
+            .gantt-container {
+                background-color: #2d3748;
+                border-color: #4a5568;
+            }
+
+            .gantt-timeline {
+                background-color: #1a202c;
+                border-color: #4a5568;
+            }
+
+            .task-label {
+                background-color: #2d3748;
+                color: #e2e8f0;
+                border-color: #4a5568;
+            }
+
+            .d3-gantt-container {
+                background-color: #2d3748;
+            }
+        }
     </style>
 </head>
 <body>
@@ -204,31 +384,56 @@
             </div>
         </div>
 
-        <!-- Project Statistics -->
+        <!-- Enhanced Project Statistics with Progress Bars -->
         <div class="stats-card">
             <div class="row">
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="totalTasks">12</div>
+                        <div class="h4 mb-1">
+                            <i class="fas fa-tasks me-2 text-light"></i>
+                            <span id="totalTasks">12</span>
+                        </div>
                         <div class="small opacity-75">전체 태스크</div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-light" role="progressbar" style="width: 100%"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="completedTasks">4</div>
+                        <div class="h4 mb-1">
+                            <i class="fas fa-check-circle me-2 text-success"></i>
+                            <span id="completedTasks">4</span>
+                        </div>
                         <div class="small opacity-75">완료됨</div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-success" id="completedProgress" role="progressbar"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="inProgressTasks">6</div>
+                        <div class="h4 mb-1">
+                            <i class="fas fa-play-circle me-2 text-info"></i>
+                            <span id="inProgressTasks">6</span>
+                        </div>
                         <div class="small opacity-75">진행중</div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-info" id="inProgressProgress" role="progressbar"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="text-center">
-                        <div class="h4 mb-1" id="overallProgress">65%</div>
+                        <div class="h4 mb-1">
+                            <i class="fas fa-chart-line me-2 text-warning"></i>
+                            <span id="overallProgress">65%</span>
+                        </div>
                         <div class="small opacity-75">전체 진행률</div>
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div class="progress-bar bg-gradient progress-bar-striped progress-bar-animated"
+                                 id="overallProgressBar" role="progressbar"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -262,8 +467,96 @@
             </div>
         </div>
 
-        <!-- Gantt Chart -->
-        <div class="card">
+        <!-- Enhanced Control Panel -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-0">간트차트 컨트롤</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-end gap-2">
+                            <!-- View Toggle -->
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="chartView" id="basicView" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary btn-sm" for="basicView">
+                                    <i class="fas fa-table me-1"></i>기본 보기
+                                </label>
+
+                                <input type="radio" class="btn-check" name="chartView" id="d3View" autocomplete="off">
+                                <label class="btn btn-outline-primary btn-sm" for="d3View">
+                                    <i class="fas fa-chart-bar me-1"></i>고급 시각화
+                                </label>
+                            </div>
+
+                            <!-- Filter Button -->
+                            <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                                <i class="fas fa-filter me-1"></i>필터
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collapsible Filter Panel -->
+            <div class="collapse" id="filterPanel">
+                <div class="card-body border-top">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">태스크 검색</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm" id="taskSearch" placeholder="태스크명 검색...">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" onclick="clearSearch()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">상태 필터</label>
+                            <select class="form-select form-select-sm" id="statusFilter">
+                                <option value="">전체 상태</option>
+                                <option value="NOT_STARTED">시작 전</option>
+                                <option value="IN_PROGRESS">진행중</option>
+                                <option value="COMPLETED">완료</option>
+                                <option value="ON_HOLD">보류</option>
+                                <option value="CANCELLED">취소</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">진행률 필터</label>
+                            <select class="form-select form-select-sm" id="progressFilter">
+                                <option value="">전체 진행률</option>
+                                <option value="0">0%</option>
+                                <option value="1-25">1-25%</option>
+                                <option value="26-50">26-50%</option>
+                                <option value="51-75">51-75%</option>
+                                <option value="76-99">76-99%</option>
+                                <option value="100">100%</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">기간 필터</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control form-control-sm" id="dateFrom">
+                                <span class="input-group-text">~</span>
+                                <input type="date" class="form-control form-control-sm" id="dateTo">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+                                    <i class="fas fa-search me-1"></i>적용
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Gantt Chart -->
+        <div class="card" id="basicGanttCard">
             <div class="card-body p-0">
                 <div class="gantt-container" id="ganttContainer">
                     <!-- Timeline Header -->
@@ -304,10 +597,13 @@
                                 <div class="task-timeline">
                                     <div class="gantt-task"
                                          th:classappend="${task.status.name() == 'COMPLETED' ? 'completed' :
-                                                        task.status.name() == 'IN_PROGRESS' ? 'in-progress' : 'not-started'}"
-                                         style="left: 5%; width: 25%;">
+                                                        task.status.name() == 'IN_PROGRESS' ? 'in-progress' :
+                                                        task.status.name() == 'ON_HOLD' ? 'on-hold' :
+                                                        task.status.name() == 'CANCELLED' ? 'cancelled' : 'not-started'}"
+                                         th:attr="data-task-id=${task.id},data-start=${task.startDate},data-end=${task.endDate},data-progress=${task.progress},data-description=${task.description}"
+                                         onclick="showTaskDetail(this)">
                                         <span th:text="${task.name}">태스크명</span>
-                                        <span class="task-progress" th:text="${#numbers.formatDecimal(task.progress, 1, 0)} + '%'">진행률</span>
+                                        <span class="task-progress" th:text="${task.progress} + '%'">진행률</span>
                                     </div>
                                 </div>
                             </div>
@@ -324,6 +620,29 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- D3.js Enhanced Gantt Chart -->
+        <div class="card d-none" id="d3GanttCard">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">고급 간트차트 (D3.js)</h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" onclick="zoomGantt('in')">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="zoomGantt('out')">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="zoomGantt('fit')">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="d3GanttChart" class="d3-gantt-container"></div>
             </div>
         </div>
 
@@ -403,33 +722,128 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         const projectId = /*[[${project.id}]]*/ 1;
-        
+        const projectData = /*[[${project}]]*/ null;
+        const tasksData = /*[[${tasks}]]*/ [];
+
         let ganttData = {};
-        
+        let projectStartDate, projectEndDate;
+        let timelineWidth;
+
         // 페이지 로드 시 간트차트 데이터 로드
         document.addEventListener('DOMContentLoaded', function() {
-            loadGanttData();
+            initializeGanttChart();
+            setupChartViewToggle();
         });
         
-        async function loadGanttData() {
-            try {
-                showLoading();
-                
-                const response = await fetch(`/web/gantt/${projectId}/data`);
-                if (!response.ok) {
-                    throw new Error('데이터 로드 실패');
+        function initializeGanttChart() {
+            if (projectData) {
+                projectStartDate = new Date(projectData.startDate);
+                projectEndDate = new Date(projectData.endDate);
+
+                // 타임라인 생성
+                generateTimeline();
+
+                // 태스크 바 위치 계산
+                if (tasksData && tasksData.length > 0) {
+                    positionTaskBars();
+                    updateStatistics();
                 }
-                
-                ganttData = await response.json();
-                renderGanttChart();
-                updateStatistics();
-                
-            } catch (error) {
-                console.error('간트차트 데이터 로드 실패:', error);
-                showError('간트차트 데이터를 불러올 수 없습니다.');
-            } finally {
-                hideLoading();
             }
+        }
+
+        function generateTimeline() {
+            const timelineHeader = document.getElementById('timelineHeader');
+            timelineHeader.innerHTML = '';
+
+            if (!projectStartDate || !projectEndDate) {
+                console.warn('Project dates not available');
+                return;
+            }
+
+            const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+            // 프로젝트 전체 기간을 주 단위로 분할
+            const projectDuration = Math.ceil((projectEndDate - projectStartDate) / (1000 * 60 * 60 * 24));
+            const weeksCount = Math.max(Math.ceil(projectDuration / 7), 4); // 최소 4주
+
+            let currentWeekStart = new Date(projectStartDate);
+            currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay()); // 주의 시작일(일요일)로 맞춤
+
+            for (let week = 0; week < weeksCount; week++) {
+                const weekEnd = new Date(currentWeekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'timeline-week';
+                weekDiv.setAttribute('data-week-start', currentWeekStart.toISOString().split('T')[0]);
+                weekDiv.setAttribute('data-week-end', weekEnd.toISOString().split('T')[0]);
+
+                const startMonth = currentWeekStart.getMonth();
+                const startDay = currentWeekStart.getDate();
+                const endDay = weekEnd.getDate();
+
+                if (currentWeekStart.getMonth() === weekEnd.getMonth()) {
+                    weekDiv.textContent = `${monthNames[startMonth]} ${startDay}-${endDay}일`;
+                } else {
+                    weekDiv.textContent = `${monthNames[startMonth]} ${startDay}일-${monthNames[weekEnd.getMonth()]} ${endDay}일`;
+                }
+
+                timelineHeader.appendChild(weekDiv);
+
+                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            }
+
+            timelineWidth = timelineHeader.children.length;
+        }
+
+        function positionTaskBars() {
+            if (!projectStartDate || !projectEndDate) {
+                console.warn('Project dates not available for positioning task bars');
+                return;
+            }
+
+            const projectDuration = Math.ceil((projectEndDate - projectStartDate) / (1000 * 60 * 60 * 24));
+            const taskBars = document.querySelectorAll('.gantt-task');
+
+            taskBars.forEach(bar => {
+                const taskStartStr = bar.getAttribute('data-start');
+                const taskEndStr = bar.getAttribute('data-end');
+                const progress = parseFloat(bar.getAttribute('data-progress')) || 0;
+
+                if (!taskStartStr || !taskEndStr) {
+                    console.warn('Task dates not available for task:', bar);
+                    return;
+                }
+
+                const taskStart = new Date(taskStartStr);
+                const taskEnd = new Date(taskEndStr);
+
+                // 유효한 날짜인지 확인
+                if (isNaN(taskStart.getTime()) || isNaN(taskEnd.getTime())) {
+                    console.warn('Invalid task dates for task:', bar, taskStartStr, taskEndStr);
+                    return;
+                }
+
+                // 프로젝트 시작일로부터의 오프셋 계산
+                const startOffset = Math.max(0, Math.ceil((taskStart - projectStartDate) / (1000 * 60 * 60 * 24)));
+                const taskDuration = Math.max(1, Math.ceil((taskEnd - taskStart) / (1000 * 60 * 60 * 24)) + 1);
+
+                const leftPercent = Math.min(95, (startOffset / Math.max(projectDuration, 1)) * 100);
+                const widthPercent = Math.min(95 - leftPercent, Math.max(2, (taskDuration / Math.max(projectDuration, 1)) * 100));
+
+                bar.style.left = leftPercent + '%';
+                bar.style.width = widthPercent + '%';
+
+                // 진행률 표시 개선
+                if (bar.classList.contains('in-progress') && progress > 0) {
+                    bar.style.setProperty('--progress', Math.min(100, progress) + '%');
+                } else if (bar.classList.contains('completed')) {
+                    bar.style.setProperty('--progress', '100%');
+                }
+
+                // 툴팁 정보 추가
+                bar.setAttribute('title', `${taskStart.toLocaleDateString('ko-KR')} ~ ${taskEnd.toLocaleDateString('ko-KR')} (${taskDuration}일, ${progress}%)`);
+            });
         }
         
         function renderGanttChart() {
@@ -507,65 +921,333 @@
             });
         }
         
-        function updateStatistics() {
-            const stats = ganttData.statistics;
-            if (!stats) return;
-            
-            document.getElementById('totalTasks').textContent = stats.totalTasks || 0;
-            document.getElementById('completedTasks').textContent = stats.completedTasks || 0;
-            document.getElementById('inProgressTasks').textContent = stats.inProgressTasks || 0;
-            document.getElementById('overallProgress').textContent = (stats.overallProgress || 0) + '%';
+        let filteredTasks = [];
+
+        function updateStatistics(tasks = tasksData) {
+            if (!tasks || tasks.length === 0) return;
+
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
+            const inProgressTasks = tasks.filter(t => t.status === 'IN_PROGRESS').length;
+            const notStartedTasks = tasks.filter(t => t.status === 'NOT_STARTED').length;
+
+            const totalProgress = tasks.reduce((sum, task) => sum + (task.progress || 0), 0);
+            const overallProgress = totalTasks > 0 ? Math.round(totalProgress / totalTasks) : 0;
+
+            document.getElementById('totalTasks').textContent = totalTasks;
+            document.getElementById('completedTasks').textContent = completedTasks;
+            document.getElementById('inProgressTasks').textContent = inProgressTasks;
+            document.getElementById('overallProgress').textContent = overallProgress + '%';
+
+            // 프로그레스 바 업데이트
+            const completedPercent = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+            const inProgressPercent = totalTasks > 0 ? (inProgressTasks / totalTasks) * 100 : 0;
+
+            document.getElementById('completedProgress').style.width = completedPercent + '%';
+            document.getElementById('inProgressProgress').style.width = inProgressPercent + '%';
+            document.getElementById('overallProgressBar').style.width = overallProgress + '%';
+        }
+
+        // 필터링 함수들
+        function applyFilters() {
+            const searchTerm = document.getElementById('taskSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const progressFilter = document.getElementById('progressFilter').value;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            filteredTasks = tasksData.filter(task => {
+                // 텍스트 검색
+                if (searchTerm && !task.name.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                // 상태 필터
+                if (statusFilter && task.status !== statusFilter) {
+                    return false;
+                }
+
+                // 진행률 필터
+                if (progressFilter) {
+                    const progress = task.progress || 0;
+                    switch(progressFilter) {
+                        case '0':
+                            if (progress !== 0) return false;
+                            break;
+                        case '1-25':
+                            if (progress < 1 || progress > 25) return false;
+                            break;
+                        case '26-50':
+                            if (progress < 26 || progress > 50) return false;
+                            break;
+                        case '51-75':
+                            if (progress < 51 || progress > 75) return false;
+                            break;
+                        case '76-99':
+                            if (progress < 76 || progress > 99) return false;
+                            break;
+                        case '100':
+                            if (progress !== 100) return false;
+                            break;
+                    }
+                }
+
+                // 날짜 필터
+                if (dateFrom) {
+                    const taskStart = new Date(task.startDate);
+                    const filterFrom = new Date(dateFrom);
+                    if (taskStart < filterFrom) return false;
+                }
+
+                if (dateTo) {
+                    const taskEnd = new Date(task.endDate);
+                    const filterTo = new Date(dateTo);
+                    if (taskEnd > filterTo) return false;
+                }
+
+                return true;
+            });
+
+            // 필터링된 결과로 차트 업데이트
+            renderFilteredChart();
+            updateStatistics(filteredTasks);
+
+            // 토스트 알림
+            showToast(`${filteredTasks.length}개의 태스크가 필터링되었습니다.`, 'info');
+        }
+
+        function clearSearch() {
+            document.getElementById('taskSearch').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('progressFilter').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+
+            filteredTasks = [...tasksData];
+            renderFilteredChart();
+            updateStatistics(filteredTasks);
+
+            showToast('필터가 초기화되었습니다.', 'success');
+        }
+
+        function renderFilteredChart() {
+            const currentTasks = filteredTasks.length > 0 ? filteredTasks : tasksData;
+
+            // 기본 차트 업데이트
+            if (!document.getElementById('basicGanttCard').classList.contains('d-none')) {
+                renderBasicChart(currentTasks);
+            }
+
+            // D3 차트 업데이트
+            if (!document.getElementById('d3GanttCard').classList.contains('d-none')) {
+                renderD3Chart(currentTasks);
+            }
+        }
+
+        function renderBasicChart(tasks) {
+            const ganttBody = document.getElementById('ganttBody');
+            ganttBody.innerHTML = '';
+
+            if (!tasks || tasks.length === 0) {
+                ganttBody.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">필터 조건에 맞는 태스크가 없습니다</h5>
+                        <button class="btn btn-outline-primary" onclick="clearSearch()">
+                            <i class="fas fa-times me-2"></i>필터 초기화
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            tasks.forEach(task => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'gantt-row';
+                rowDiv.innerHTML = `
+                    <div class="task-label">
+                        <div style="font-weight: 600;">${task.name}</div>
+                        <div style="font-size: 0.75rem; color: #6c757d; margin-top: 2px;">
+                            ${task.startDate} ~ ${task.endDate} (${task.duration || 0}일)
+                        </div>
+                    </div>
+                    <div class="task-timeline">
+                        <div class="gantt-task ${getTaskStatusClass(task.status)}"
+                             data-task-id="${task.id}"
+                             data-start="${task.startDate}"
+                             data-end="${task.endDate}"
+                             data-progress="${task.progress}"
+                             data-description="${task.description || ''}"
+                             onclick="showTaskDetail(this)">
+                            <span>${task.name}</span>
+                            <span class="task-progress">${task.progress}%</span>
+                        </div>
+                    </div>
+                `;
+                ganttBody.appendChild(rowDiv);
+            });
+
+            // 태스크 바 위치 재계산
+            positionTaskBars();
+        }
+
+        function renderD3Chart(tasks) {
+            // D3 차트가 활성화된 경우에만 다시 렌더링
+            if (!document.getElementById('d3GanttCard').classList.contains('d-none')) {
+                // 기존 D3 SVG 제거 후 다시 생성
+                document.getElementById('d3GanttChart').innerHTML = '';
+
+                // 전역 tasksData를 임시로 교체
+                const originalTasks = [...tasksData];
+                tasksData = tasks;
+                initializeD3Gantt();
+                tasksData = originalTasks;
+            }
+        }
+
+        function getTaskStatusClass(status) {
+            const statusClasses = {
+                'NOT_STARTED': 'not-started',
+                'IN_PROGRESS': 'in-progress',
+                'COMPLETED': 'completed',
+                'ON_HOLD': 'on-hold',
+                'CANCELLED': 'cancelled'
+            };
+            return statusClasses[status] || 'not-started';
         }
         
         function showTaskDetail(task) {
             const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
             const body = document.getElementById('taskDetailBody');
-            
+
+            // 태스크 객체 또는 DOM 요소에서 데이터 추출
+            let taskData;
+            if (task && task.name) {
+                taskData = task;
+            } else {
+                // DOM 요소에서 데이터 추출
+                const taskElement = task.target ? task.target.closest('.gantt-task') : task;
+                if (!taskElement) return;
+
+                taskData = {
+                    id: taskElement.getAttribute('data-task-id'),
+                    name: taskElement.querySelector('span') ? taskElement.querySelector('span').textContent : '알 수 없음',
+                    startDate: taskElement.getAttribute('data-start'),
+                    endDate: taskElement.getAttribute('data-end'),
+                    progress: parseFloat(taskElement.getAttribute('data-progress')) || 0,
+                    status: taskElement.classList.contains('completed') ? 'COMPLETED' :
+                           taskElement.classList.contains('in-progress') ? 'IN_PROGRESS' :
+                           taskElement.classList.contains('on-hold') ? 'ON_HOLD' :
+                           taskElement.classList.contains('cancelled') ? 'CANCELLED' : 'NOT_STARTED',
+                    description: taskElement.getAttribute('data-description') || '설명이 없습니다.'
+                };
+            }
+
+            const startDate = new Date(taskData.startDate);
+            const endDate = new Date(taskData.endDate);
+            const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
             body.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
                         <h6>기본 정보</h6>
                         <dl class="row">
                             <dt class="col-sm-4">태스크명:</dt>
-                            <dd class="col-sm-8">${task.name}</dd>
-                            
+                            <dd class="col-sm-8">${taskData.name}</dd>
+
                             <dt class="col-sm-4">시작일:</dt>
-                            <dd class="col-sm-8">${task.startDate}</dd>
-                            
+                            <dd class="col-sm-8">${startDate.toLocaleDateString('ko-KR')}</dd>
+
                             <dt class="col-sm-4">종료일:</dt>
-                            <dd class="col-sm-8">${task.endDate}</dd>
-                            
+                            <dd class="col-sm-8">${endDate.toLocaleDateString('ko-KR')}</dd>
+
                             <dt class="col-sm-4">기간:</dt>
-                            <dd class="col-sm-8">${task.duration}일</dd>
-                            
+                            <dd class="col-sm-8">${duration}일</dd>
+
                             <dt class="col-sm-4">진행률:</dt>
                             <dd class="col-sm-8">
                                 <div class="progress" style="width: 100px; display: inline-block;">
-                                    <div class="progress-bar" style="width: ${task.progress}%"></div>
+                                    <div class="progress-bar bg-${getProgressColor(taskData.progress)}"
+                                         style="width: ${taskData.progress}%"></div>
                                 </div>
-                                ${task.progress}%
+                                ${taskData.progress}%
                             </dd>
-                            
+
                             <dt class="col-sm-4">상태:</dt>
                             <dd class="col-sm-8">
-                                <span class="badge bg-${getStatusColor(task.status)}">
-                                    ${getStatusLabel(task.status)}
+                                <span class="badge bg-${getStatusColor(taskData.status)}">
+                                    ${getStatusLabel(taskData.status)}
                                 </span>
                             </dd>
                         </dl>
                     </div>
                     <div class="col-md-6">
                         <h6>설명</h6>
-                        <p>${task.description || '설명이 없습니다.'}</p>
-                        
-                        ${task.dependencies ? '<h6>의존성</h6><ul>' + 
-                        task.dependencies.map(dep => '<li>태스크 #' + dep.predecessorId + ' (' + dep.type + ')</li>').join('') + 
-                        '</ul>' : ''}
+                        <p>${taskData.description}</p>
+
+                        <h6>액션</h6>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="editTask('${taskData.id}')">
+                                <i class="fas fa-edit me-1"></i>수정
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    onclick="copyTaskInfo('${taskData.id}')">
+                                <i class="fas fa-copy me-1"></i>정보 복사
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
-            
+
             modal.show();
+        }
+
+        function getProgressColor(progress) {
+            if (progress >= 100) return 'success';
+            if (progress >= 75) return 'info';
+            if (progress >= 50) return 'warning';
+            return 'danger';
+        }
+
+        function editTask(taskId) {
+            window.location.href = `/web/tasks/${taskId}/edit`;
+        }
+
+        function copyTaskInfo(taskId) {
+            const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (taskElement) {
+                const info = `태스크: ${taskElement.querySelector('span').textContent}\n시작일: ${taskElement.getAttribute('data-start')}\n종료일: ${taskElement.getAttribute('data-end')}\n진행률: ${taskElement.getAttribute('data-progress')}%`;
+                navigator.clipboard.writeText(info).then(() => {
+                    showToast('태스크 정보가 클립보드에 복사되었습니다.', 'success');
+                });
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            new bootstrap.Toast(toast).show();
+
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+            return container;
         }
         
         function getStatusColor(status) {
@@ -610,6 +1292,313 @@
         function printGantt() {
             window.print();
         }
+
+        // D3.js Enhanced Gantt Chart Functions
+        function setupChartViewToggle() {
+            const basicView = document.getElementById('basicView');
+            const d3View = document.getElementById('d3View');
+
+            basicView.addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('basicGanttCard').classList.remove('d-none');
+                    document.getElementById('d3GanttCard').classList.add('d-none');
+                }
+            });
+
+            d3View.addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('basicGanttCard').classList.add('d-none');
+                    document.getElementById('d3GanttCard').classList.remove('d-none');
+
+                    // D3.js 로딩을 위해 잠시 대기
+                    setTimeout(() => {
+                        initializeD3Gantt();
+                    }, 100);
+                }
+            });
+        }
+
+        let d3Svg, d3ZoomLevel = 1;
+
+        function initializeD3Gantt(retryCount = 0) {
+            // D3.js 라이브러리 로딩 확인 (최대 5번 재시도)
+            if (typeof d3 === 'undefined') {
+                if (retryCount < 5) {
+                    console.log(`D3.js 로딩 대기 중... (${retryCount + 1}/5)`);
+                    setTimeout(() => initializeD3Gantt(retryCount + 1), 500);
+                    return;
+                } else {
+                    console.error('D3.js 라이브러리가 로드되지 않았습니다');
+                    showD3ErrorState();
+                    return;
+                }
+            }
+
+            if (!tasksData || tasksData.length === 0) {
+                showD3EmptyState();
+                return;
+            }
+
+            const container = document.getElementById('d3GanttChart');
+            container.innerHTML = '';
+
+            const margin = { top: 60, right: 40, bottom: 60, left: 200 };
+            const width = Math.max(800, container.offsetWidth) - margin.left - margin.right;
+            const height = (tasksData.length * 50) + margin.top + margin.bottom;
+
+            // SVG 생성
+            d3Svg = d3.select('#d3GanttChart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height)
+                .style('background', '#fafafa');
+
+            // 화살표 마커 정의
+            const defs = d3Svg.append('defs');
+            defs.append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '0 0 10 10')
+                .attr('refX', 8)
+                .attr('refY', 3)
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .attr('orient', 'auto')
+                .append('path')
+                .attr('d', 'M 0 0 L 10 3 L 0 6 Z')
+                .attr('fill', '#666');
+
+            const g = d3Svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            // 시간 스케일 설정
+            const timeScale = d3.scaleTime()
+                .domain([projectStartDate, projectEndDate])
+                .range([0, width]);
+
+            // Y 스케일 설정 (태스크 위치)
+            const yScale = d3.scaleBand()
+                .domain(tasksData.map(d => d.id))
+                .range([0, tasksData.length * 50])
+                .padding(0.2);
+
+            // 그리드 라인 그리기
+            drawD3Grid(g, timeScale, yScale, width, tasksData.length * 50);
+
+            // 오늘 날짜 라인
+            drawTodayLine(g, timeScale, tasksData.length * 50);
+
+            // X축 (시간축) 그리기
+            const xAxis = d3.axisTop(timeScale)
+                .tickFormat(d3.timeFormat('%m/%d'))
+                .ticks(d3.timeWeek.every(1));
+
+            g.append('g')
+                .attr('class', 'd3-timeline-axis')
+                .call(xAxis);
+
+            // 태스크 바 그리기
+            drawD3TaskBars(g, tasksData, timeScale, yScale);
+
+            // Y축 (태스크 라벨) 그리기
+            const yAxis = d3.axisLeft(yScale)
+                .tickFormat(id => {
+                    const task = tasksData.find(t => t.id == id);
+                    return task ? task.name : '';
+                });
+
+            g.append('g')
+                .attr('class', 'd3-timeline-axis')
+                .call(yAxis);
+        }
+
+        function drawD3Grid(g, timeScale, yScale, width, height) {
+            // 세로 그리드 라인 (주 단위)
+            const weekTicks = timeScale.ticks(d3.timeWeek.every(1));
+            g.selectAll('.d3-grid-line-vertical')
+                .data(weekTicks)
+                .enter()
+                .append('line')
+                .attr('class', 'd3-grid-line')
+                .attr('x1', d => timeScale(d))
+                .attr('x2', d => timeScale(d))
+                .attr('y1', -20)
+                .attr('y2', height);
+
+            // 가로 그리드 라인
+            g.selectAll('.d3-grid-line-horizontal')
+                .data(yScale.domain())
+                .enter()
+                .append('line')
+                .attr('class', 'd3-grid-line')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', d => yScale(d))
+                .attr('y2', d => yScale(d));
+        }
+
+        function drawTodayLine(g, timeScale, height) {
+            const today = new Date();
+            if (today >= projectStartDate && today <= projectEndDate) {
+                g.append('line')
+                    .attr('class', 'd3-today-line')
+                    .attr('x1', timeScale(today))
+                    .attr('x2', timeScale(today))
+                    .attr('y1', -20)
+                    .attr('y2', height);
+            }
+        }
+
+        function drawD3TaskBars(g, tasks, timeScale, yScale) {
+            const taskGroups = g.selectAll('.d3-task-group')
+                .data(tasks)
+                .enter()
+                .append('g')
+                .attr('class', 'd3-task-group');
+
+            // 태스크 바 배경
+            taskGroups.append('rect')
+                .attr('class', 'd3-task-bar')
+                .attr('x', d => timeScale(new Date(d.startDate)))
+                .attr('y', d => yScale(d.id))
+                .attr('width', d => {
+                    const start = timeScale(new Date(d.startDate));
+                    const end = timeScale(new Date(d.endDate));
+                    return Math.max(2, end - start);
+                })
+                .attr('height', yScale.bandwidth())
+                .attr('fill', d => getD3TaskColor(d.status))
+                .attr('rx', 4)
+                .on('click', function(event, d) {
+                    showTaskDetail(d);
+                })
+                .on('mouseover', function(event, d) {
+                    showD3Tooltip(event, d);
+                })
+                .on('mouseout', hideD3Tooltip);
+
+            // 진행률 바
+            taskGroups.append('rect')
+                .attr('class', 'd3-task-progress')
+                .attr('x', d => timeScale(new Date(d.startDate)))
+                .attr('y', d => yScale(d.id))
+                .attr('width', d => {
+                    const start = timeScale(new Date(d.startDate));
+                    const end = timeScale(new Date(d.endDate));
+                    const totalWidth = Math.max(2, end - start);
+                    return totalWidth * (d.progress / 100);
+                })
+                .attr('height', yScale.bandwidth())
+                .attr('fill', '#28a745')
+                .attr('rx', 4);
+
+            // 태스크 텍스트
+            taskGroups.append('text')
+                .attr('class', 'd3-task-text')
+                .attr('x', d => timeScale(new Date(d.startDate)) + 5)
+                .attr('y', d => yScale(d.id) + yScale.bandwidth() / 2)
+                .attr('dy', '0.35em')
+                .text(d => {
+                    const start = timeScale(new Date(d.startDate));
+                    const end = timeScale(new Date(d.endDate));
+                    const width = end - start;
+                    return width > 100 ? d.name : (width > 50 ? d.name.substring(0, 10) + '...' : '');
+                });
+        }
+
+        function getD3TaskColor(status) {
+            const colors = {
+                'NOT_STARTED': '#6c757d',
+                'IN_PROGRESS': '#17a2b8',
+                'COMPLETED': '#28a745',
+                'ON_HOLD': '#ffc107',
+                'CANCELLED': '#dc3545'
+            };
+            return colors[status] || '#6c757d';
+        }
+
+        function showD3Tooltip(event, task) {
+            const tooltip = d3.select('body').append('div')
+                .attr('class', 'tooltip')
+                .style('position', 'absolute')
+                .style('background', 'rgba(0,0,0,0.8)')
+                .style('color', 'white')
+                .style('padding', '8px')
+                .style('border-radius', '4px')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none')
+                .style('z-index', '1000');
+
+            tooltip.html(`
+                <strong>${task.name}</strong><br>
+                기간: ${task.startDate} ~ ${task.endDate}<br>
+                진행률: ${task.progress}%<br>
+                상태: ${getStatusLabel(task.status)}
+            `)
+            .style('left', (event.pageX + 10) + 'px')
+            .style('top', (event.pageY - 10) + 'px');
+
+            setTimeout(() => tooltip.remove(), 3000);
+        }
+
+        function hideD3Tooltip() {
+            d3.selectAll('.tooltip').remove();
+        }
+
+        function showD3EmptyState() {
+            const container = document.getElementById('d3GanttChart');
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-bar fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">D3.js 차트를 표시할 데이터가 없습니다</h5>
+                    <p class="text-muted">프로젝트에 태스크를 추가해보세요.</p>
+                </div>
+            `;
+        }
+
+        function showD3ErrorState() {
+            const container = document.getElementById('d3GanttChart');
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                    <h5 class="text-warning">D3.js 라이브러리 로딩 오류</h5>
+                    <p class="text-muted">네트워크 연결을 확인하고 페이지를 새로고침해주세요.</p>
+                    <button class="btn btn-primary btn-sm" onclick="location.reload()">
+                        <i class="fas fa-refresh me-1"></i>새로고침
+                    </button>
+                </div>
+            `;
+        }
+
+        function zoomGantt(action) {
+            if (!d3Svg) return;
+
+            switch(action) {
+                case 'in':
+                    d3ZoomLevel *= 1.2;
+                    break;
+                case 'out':
+                    d3ZoomLevel /= 1.2;
+                    break;
+                case 'fit':
+                    d3ZoomLevel = 1;
+                    break;
+            }
+
+            d3Svg.transition()
+                .duration(300)
+                .attr('transform', `scale(${d3ZoomLevel})`);
+        }
+
+        // 페이지 로딩 완료 후 D3.js 상태 확인
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (typeof d3 === 'undefined') {
+                    console.error('D3.js 라이브러리 로딩 실패');
+                } else {
+                    console.log('D3.js 라이브러리 로딩 성공', d3.version);
+                }
+            }, 1000);
+        });
         /*]]>*/
     </script>
 </body>

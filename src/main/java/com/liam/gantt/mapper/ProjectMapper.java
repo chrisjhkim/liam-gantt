@@ -75,6 +75,11 @@ public class ProjectMapper {
         existingEntity.setDescription(dto.getDescription());
         existingEntity.setStartDate(dto.getStartDate());
         existingEntity.setEndDate(dto.getEndDate());
+
+        // Status 필드 업데이트 추가
+        if (dto.getStatus() != null) {
+            existingEntity.setStatus(dto.getStatus());
+        }
     }
 
     public List<ProjectResponseDto> toResponseDtoList(List<Project> entities) {
