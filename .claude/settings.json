@@ -36,5 +36,38 @@
     "branchPrefix": "feature/",
     "requireTests": true,
     "autoFormat": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Read(D:\\Users\\.claude\\output-styles/**)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(compact)",
+      "Bash(cls)",
+      "Bash(clear)",
+      "Bash(find:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(where python)",
+      "WebSearch",
+      "Bash(move:*)",
+      "WebFetch(domain:www.createwithswift.com)",
+      "WebFetch(domain:iosapptemplates.com)",
+      "Bash(mv:*)",
+      "Read(//d/**)",
+      "Bash(node:*)",
+      "Bash(java:*)",
+      "Bash(docker:*)",
+      "Bash(git --version)",
+      "SlashCommand(/sc:analyze)",
+      "SlashCommand(/sc:business-panel:*)",
+      "Bash(cd:*)",
+      "WebFetch(domain:apple.github.io)",
+      "Bash(git clone:*)"
+    ],
+    "deny": [],
+    "ask": []
   }
 }
